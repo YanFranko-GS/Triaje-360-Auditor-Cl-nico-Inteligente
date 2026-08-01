@@ -12,8 +12,13 @@ class AIState(StrEnum):
     OFFLINE = "OFFLINE"
     STARTING = "STARTING"
     READY = "READY"
+    LISTENING = "LISTENING"
+    PROCESSING_AUDIO = "PROCESSING_AUDIO"
+    TRANSCRIBING = "TRANSCRIBING"
+    RETRIEVING = "RETRIEVING"
     WARMING_UP = "WARMING_UP"
     ANALYZING = "ANALYZING"
+    ASKING_FOLLOWUP = "ASKING_FOLLOWUP"
     VALIDATING = "VALIDATING"
     COMPLETED = "COMPLETED"
     FALLBACK = "FALLBACK"
@@ -24,8 +29,13 @@ LABELS = {
     AIState.OFFLINE: "Sin conexión",
     AIState.STARTING: "Iniciando",
     AIState.READY: "Disponible",
+    AIState.LISTENING: "Escuchando",
+    AIState.PROCESSING_AUDIO: "Procesando audio",
+    AIState.TRANSCRIBING: "Transcribiendo",
+    AIState.RETRIEVING: "Consultando evidencia",
     AIState.WARMING_UP: "Precalentando",
     AIState.ANALYZING: "Analizando",
+    AIState.ASKING_FOLLOWUP: "Completando información",
     AIState.VALIDATING: "Validando JSON",
     AIState.COMPLETED: "Respuesta recibida",
     AIState.FALLBACK: "Fallback activado",

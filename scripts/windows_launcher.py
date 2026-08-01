@@ -30,6 +30,10 @@ MODEL = "gemma4:e2b"
 EXPECTED_ENV = {
     "AI_PROVIDER": "ollama",
     "ALLOW_LAN_ACCESS": "false",
+    "STORE_DEMO_AUDIO": "false",
+    "ASR_PROVIDER": "vosk",
+    "ASR_MODEL_PATH": ".demo/asr_models/vosk-model-small-es-0.42",
+    "MAX_AUDIO_SECONDS": "30",
     "OLLAMA_BASE_URL": "http://localhost:11434",
     "OLLAMA_MODEL": MODEL,
     "OLLAMA_TIMEOUT_SECONDS": "120",

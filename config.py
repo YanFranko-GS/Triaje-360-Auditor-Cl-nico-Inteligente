@@ -21,6 +21,10 @@ class Settings:
     ollama_keep_alive: str = "2m"
     ai_provider: str = "ollama"
     allow_lan_access: bool = False
+    store_demo_audio: bool = False
+    asr_provider: str = "vosk"
+    asr_model_path: Path | None = None
+    max_audio_seconds: int = 30
 
 
 def load_settings(env_file: Path | None = None) -> Settings:
@@ -30,11 +34,12 @@ def load_settings(env_file: Path | None = None) -> Settings:
         num_ctx = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
         num_predict = int(os.getenv("OLLAMA_NUM_PREDICT", "320"))
         num_gpu = int(os.getenv("OLLAMA_NUM_GPU", "0"))
+        max_audio_seconds = int(os.getenv("MAX_AUDIO_SECONDS", "30"))
     except ValueError as exc:
         raise ValueError("OLLAMA_TIMEOUT_SECONDS debe ser un número entero.") from exc
     if timeout <= 0:
         raise ValueError("OLLAMA_TIMEOUT_SECONDS debe ser mayor que cero.")
-    if num_ctx <= 0 or num_predict <= 0 or num_gpu < 0:
+    if num_ctx <= 0 or num_predict <= 0 or num_gpu < 0 or not 1 <= max_audio_seconds <= 60:
         raise ValueError("Los límites de Ollama deben ser valores positivos válidos.")
     provider = os.getenv("AI_PROVIDER", "ollama").strip().casefold()
     if provider not in {"ollama", "hosted"}:
@@ -50,4 +55,8 @@ def load_settings(env_file: Path | None = None) -> Settings:
         ollama_keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "2m").strip(),
         ai_provider=provider,
         allow_lan_access=os.getenv("ALLOW_LAN_ACCESS", "false").strip().casefold() == "true",
+        store_demo_audio=os.getenv("STORE_DEMO_AUDIO", "false").strip().casefold() == "true",
+        asr_provider=os.getenv("ASR_PROVIDER", "vosk").strip().casefold(),
+        asr_model_path=Path(os.environ["ASR_MODEL_PATH"]) if os.getenv("ASR_MODEL_PATH") else None,
+        max_audio_seconds=max_audio_seconds,
     )
