@@ -11,6 +11,19 @@ TRIaje 360 es una demostración educativa con pacientes y protocolos ficticios. 
 - Respaldo determinista y registro explícito de fallos.
 - Reinicio limitado a registros marcados como demo.
 
+## Controles de identidad y voz
+
+- Contraseñas demo con scrypt y salt; eventos de login nunca guardan contraseña.
+- Sesiones y permisos por rol; el paciente queda vinculado a un único registro sintético.
+- WAV limitado por MIME, tamaño, duración, canales y sample rate; se rechazan vacío, silencio y saturación.
+- Audio eliminado por defecto (`STORE_DEMO_AUDIO=false`); sólo se conserva hash/metadatos para trazabilidad.
+- Texto sanitizado contra HTML/script e instrucciones de prompt injection.
+- Reducción de ruido moderada y revisión humana obligatoria; no se promete escucha perfecta.
+- Vosk y su modelo se cargan bajo demanda; no se descargan durante el arranque.
+- El audio directo de Gemma permanece `UNCONFIRMED` y no se atribuye transcripción al modelo.
+
+`audioop` se usa en Python 3.12 y está deprecado para Python 3.13; una migración futura deberá sustituirlo antes de actualizar el runtime.
+
 ## Controles añadidos en la demo multivista
 
 - Perfiles y consentimiento son simulados y están etiquetados como no aptos para producción.

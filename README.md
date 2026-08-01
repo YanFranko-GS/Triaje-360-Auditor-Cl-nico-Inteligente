@@ -140,6 +140,22 @@ git push -u origin feature/nombre-descriptivo
 
 Abra un Pull Request hacia `develop`. No haga push directo ni fusione sin revisión del responsable del repositorio. Consulte [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Acceso profesional y admisión por voz
+
+La primera pantalla es ahora un acceso diferenciado para paciente y personal sanitario. Las credenciales demo se almacenan con scrypt, se crean mediante `scripts/create_demo_accounts.py` y se documentan en [autenticación demostrativa](docs/authentication_demo.md). Cada rol recibe sólo las vistas permitidas; cerrar sesión invalida la sesión local.
+
+La admisión acepta texto o WAV desde el navegador. El audio se valida, convierte a mono/16 kHz, normaliza moderadamente y recorta silencios antes de enviarse a Vosk español local bajo demanda. La transcripción es editable y debe confirmarse. Gemma 4 extrae campos Pydantic, marca inferencias para revisión, detecta faltantes y formula una pregunta no sugestiva por turno. Consulte [flujo de voz](docs/voice_workflow.md).
+
+La comprobación empírica del runtime produjo `DIRECT_GEMMA_AUDIO_UNCONFIRMED`: Ollama 0.32.4 declara audio y devuelve HTTP 200, pero Gemma no demostró recibir el WAV. Por ello la aplicación no atribuye la transcripción a Gemma y usa `local_asr` o `manual_text`. Véase [validación de audio](docs/audio_runtime_validation.md).
+
+Instalación opcional de voz —no descarga modelos durante el arranque—:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-voice.txt
+```
+
+Variables: `STORE_DEMO_AUDIO=false`, `ASR_PROVIDER=vosk`, `ASR_MODEL_PATH`, `MAX_AUDIO_SECONDS=30`. Los bytes de audio no se persisten por defecto.
+
 ## Iteración multivista con RAG trazable
 
 La interfaz actual ofrece seis vistas con acceso por perfil demo: Inicio, Portal del paciente, Estación de triaje, Panel médico, Datos ficticios y Auditoría. El seed idempotente incorpora 2 instituciones, 6 perfiles profesionales/administrativos, 10 pacientes sintéticos y 20 atenciones históricas. Use `scripts/seed_demo_data.py` para completar el seed y `scripts/reset_demo_data.py` para restablecer exclusivamente las tablas demo.

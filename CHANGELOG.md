@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 - 2026-08-01
+
+- Corrección de `nav_page` mediante navegación diferida previa al widget y regresión exacta.
+- Login paciente/profesional con hashes scrypt, sesiones, permisos y auditoría.
+- Rediseño de acceso y shell como plataforma clínica de validación.
+- Captura WAV, preprocesamiento moderado, perfiles de ruido y almacenamiento desactivado.
+- ASR Vosk español local bajo demanda y texto manual permanente.
+- Extracción Pydantic con Gemma, campos confirmables y preguntas de seguimiento limitadas.
+- Verificación empírica de audio directo clasificada como `UNCONFIRMED`.
+
 ## 0.3.0 - 2026-08-01
 
 - Navegación multivista por seis perfiles clínicos/administrativos demostrativos.

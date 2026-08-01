@@ -4,6 +4,8 @@
 
 Streamlit, SQLite y Ollama se ejecutan en la misma computadora. Ollama permanece en `127.0.0.1`, `ALLOW_LAN_ACCESS=false`, `AI_PROVIDER=ollama` y `num_gpu=0` para estabilidad en el equipo de prueba. Es la única modalidad validada en este repositorio.
 
+La voz es opcional: instale `requirements-voice.txt`, descargue manualmente un modelo Vosk español a una ruta local ignorada y configure `ASR_MODEL_PATH`. El arranque nunca descarga modelos. La aplicación funciona con texto manual cuando ASR falta.
+
 ## Proveedor hospedado (no configurado)
 
 `services/ai_provider.py` define la frontera para un proveedor hospedado, pero falla de forma segura con “no configurado”. El repositorio no contiene claves ni activa llamadas externas. Habilitarlo exige gestión de secretos, contratos de tratamiento, residencia de datos, registros de acceso y evaluación de privacidad.
@@ -11,3 +13,5 @@ Streamlit, SQLite y Ollama se ejecutan en la misma computadora. Ollama permanece
 ## Red local o producción
 
 No está autorizada por defecto. Antes de exponer Streamlit u Ollama se requieren autenticación real, TLS, control de acceso, cifrado, base multiusuario, gestión de sesiones, hardening, respaldo, monitoreo, retención, evaluación regulatoria y validación clínica. Nunca se debe publicar el puerto de Ollama sin una capa de seguridad aprobada.
+
+El login incluido es demostrativo y no habilita publicación en Internet. Streamlit y Ollama deben mantener bind `127.0.0.1` hasta contar con backend de autorización y controles institucionales.

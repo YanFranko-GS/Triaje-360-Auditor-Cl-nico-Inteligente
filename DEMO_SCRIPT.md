@@ -20,6 +20,15 @@ Si aparece «la ejecución de scripts está deshabilitada en este sistema», no 
 
 **2:50–3:00 — Cierre.** Recordar que usa datos y protocolos ficticios, no determina negligencia y toda decisión corresponde a un profesional autorizado.
 
+## Recorrido de acceso y voz (4–6 minutos)
+
+1. Abra la aplicación y muestre que no hay selector abierto de perfiles. Ingrese como paciente `76543210` / `1999-01-01`.
+2. Acepte la captura sintética. Grabe un segmento WAV o escriba el relato; reproduzca, revise y confirme la transcripción editable.
+3. Pulse **Organizar información**. Muestre campos con estado, interrupción si aparece una señal configurada y una sola pregunta de seguimiento cuando falten datos.
+4. Envíe a triaje y abra **Seguimiento**. Cierre sesión.
+5. Ingrese como `nurse.demo` / `Clinica360-N1!`, revise cola y evidencia; registre la decisión profesional.
+6. Ingrese como médico o administrador para revisar cronología/checklist. Muestre **Comprobar asistente**, modelo real y fallback explícito.
+
 ## Recorrido multivista (3–5 minutos)
 
 1. En **Inicio**, muestre ambos logotipos, el caso `76543210`, el estado real de Gemma y los cuatro fragmentos RAG aprobados.

@@ -35,6 +35,12 @@ La aplicación es un monolito modular de Streamlit, adecuado para una demostraci
 
 Ocho tablas de negocio: `patients`, `medical_history`, `consultations`, `model_responses`, `checklist_items`, `actions`, `closures` y `audits`. Las claves foráneas están activas y la inicialización puede repetirse.
 
+## Identidad, voz y conversación
+
+`auth_service.py` separa hashes, autenticación, sesiones y eventos de login de la presentación. `ui/auth.py` sólo captura datos; `app.py` aplica permisos antes de construir navegación. La navegación programática usa `requested_page`, que se consume antes de instanciar `st.radio(key="nav_page")`.
+
+`audio_pipeline.py` valida y acondiciona WAV sin persistirlo. `services/local_asr.py` carga Vosk únicamente cuando existe paquete y ruta local. `intake_service.py` entrega a Gemma texto confirmado, valida la extracción con `IntakeExtraction` y degrada a extracción determinista explícita. `workflow_store.py` conserva metadatos, transcripción, turnos, campos y confirmaciones.
+
 ## Arquitectura multivista y RAG
 
 `app.py` compone configuración, migraciones, perfil y navegación. `ui/pages.py` implementa las vistas por rol y `ui/ai_status.py` la máquina visual `OFFLINE → STARTING → READY → WARMING_UP → ANALYZING → VALIDATING → COMPLETED`, con estados explícitos de `FALLBACK` y `ERROR`.
