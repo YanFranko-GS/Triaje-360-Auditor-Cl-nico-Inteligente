@@ -1,5 +1,16 @@
 # Arquitectura
 
+## Versión final longitudinal
+
+La rama final conserva los límites anteriores y añade cuatro servicios explícitos:
+
+- `longitudinal_db.py`: migración relacional idempotente, registro transaccional, memoria longitudinal, historia, analítica y catálogo seguro.
+- `clinical_verifier.py`: validación de esquema, reglas, coherencia y segunda inferencia independiente secuencial.
+- `triage_service.py`: propuesta configurable multifactor de cinco niveles; nunca reemplaza la decisión profesional.
+- `ui/longitudinal_views.py`: historia del paciente, gráficos descriptivos y estructura de datos restringida a administración.
+
+El flujo de IA es secuencial: extracción con `PRIMARY_MODEL`, reglas deterministas y revisión con `REVIEW_MODEL`. Solo se envía al modelo el subconjunto de relato y memoria necesario para la atención actual. SQLite, no el historial libre del LLM, es la fuente de memoria confirmada.
+
 ## Capa de presentación
 
 - `app.py`: composición del flujo Streamlit y estado de sesión.
