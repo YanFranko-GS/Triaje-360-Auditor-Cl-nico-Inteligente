@@ -35,7 +35,7 @@ def render_brand_header(login: bool = False) -> None:
           <div class="brand-header__logo">{left}</div>
           <div class="brand-header__copy">
             <h1>TRIaje <span>360</span></h1>
-            <p>Asistencia inteligente para admisión y completitud clínica</p>
+            <p>Plataforma inteligente de admisión, triaje y continuidad clínica</p>
           </div>
           <div class="brand-header__powered"><small>Tecnología integrada</small>{right}</div>
         </header>
@@ -62,7 +62,7 @@ def render_header(*, ollama_ready: bool, model_ready: bool, model_name: str) -> 
           </div>
           <div class="hero__meta">
             <span class="pill pill--info">KutanLab</span>
-            <span class="pill pill--warn">Prototipo educativo</span>
+            <span class="pill pill--warn">Validación profesional</span>
             <span class="pill pill--{ollama_class}">{ollama_text}</span>
             <span class="pill pill--{model_class}">{_safe(model_text)}</span>
             <span class="pill pill--info">CPU · GPU 0</span>
@@ -107,9 +107,9 @@ def render_patient_card(patient: dict[str, Any]) -> None:
     tags = "".join(f'<span class="history-tag">{_safe(item["detail"])}</span>' for item in history)
     st.markdown(
         f"""
-        <section class="patient-card" aria-label="Ficha del paciente ficticio">
+        <section class="patient-card" aria-label="Ficha del paciente">
           <div class="patient-name">{_safe(patient['name'])}</div>
-          <div class="patient-meta">DNI ficticio {_safe(patient['dni'])} · {_safe(patient['sex'])} · {_safe(patient['age'])} años</div>
+          <div class="patient-meta">DNI {_safe(patient['dni'])} · {_safe(patient['sex'])} · {_safe(patient['age'])} años</div>
           <div class="history-tags">{tags}</div>
         </section>
         """,
@@ -123,7 +123,7 @@ def render_empty_clinical_panel() -> None:
         <section class="empty-state" aria-label="Auditoría pendiente">
           <div class="empty-state__icon" aria-hidden="true">📋</div>
           <h3>Esperando análisis del caso</h3>
-          <p>Complete la admisión ficticia. Aquí aparecerán la prioridad documental, las banderas de revisión y el protocolo demostrativo.</p>
+          <p>Complete la admisión. Aquí aparecerán la prioridad documental, las banderas de revisión y el protocolo configurado.</p>
           <div class="empty-steps">
             <div class="empty-step"><b>1 · Registrar</b>Ingrese el relato transcrito.</div>
             <div class="empty-step"><b>2 · Estructurar</b>Gemma 4 genera JSON validado.</div>
@@ -151,6 +151,6 @@ def render_engine_banner(*, model_used: bool, model_name: str, fallback_reason: 
 
 def render_disclaimer() -> None:
     st.markdown(
-        '<aside class="notice"><b>Uso educativo.</b> Este sistema no diagnostica, no prescribe y no sustituye el juicio profesional ni los protocolos institucionales. Use únicamente datos ficticios.</aside>',
+        '<aside class="notice">Entorno de validación con información sintética. No sustituye el juicio clínico.</aside>',
         unsafe_allow_html=True,
     )

@@ -32,7 +32,7 @@
     "page": "repository metadata",
     "population": "general",
     "text": "El registro institucional identifica el documento como reporte de resultados de investigación sobre triaje y servicios médicos de urgencia.",
-    "applicability": "Contexto peruano para gobernanza del flujo demostrativo de triaje.",
-    "limitations": "El prototipo usa una escala demostrativa de cinco niveles y no reproduce Manchester, CTAS, ESI ni SAT."
+    "applicability": "Contexto peruano para gobernanza y configuración institucional del flujo de triaje.",
+    "limitations": "La plataforma usa una escala configurable de cinco niveles y no reproduce reglas protegidas de Manchester, CTAS, ESI ni SAT."
   }
 ]

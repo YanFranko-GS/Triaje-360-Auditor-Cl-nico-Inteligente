@@ -11,7 +11,7 @@
   --triage-green: #18794e;
 }
 
-.stApp { background: var(--triage-bg); color: var(--triage-text); }
+.stApp { background: var(--triage-bg); color: var(--triage-text); overflow-x: hidden; }
 .block-container { max-width: 1480px; padding: 2.5rem 2rem 3rem; }
 [data-testid="stHeader"] { background: rgba(241, 245, 249, .96); }
 [data-testid="stSidebar"] { border-right: 1px solid var(--triage-border); }
