@@ -1,0 +1,2 @@
+# Instalación opcional y explícita; el arranque normal no descarga modelos ASR.
+vosk==0.3.45

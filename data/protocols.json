@@ -1,0 +1,25 @@
+{
+  "respiratory_alert": {
+    "name": "Alerta respiratoria — protocolo demostrativo",
+    "priority": "Naranja",
+    "description": "Checklist de completitud documental ante manifestaciones respiratorias en el relato.",
+    "triggers": ["falta de aire", "falta el aire", "dificultad para respirar", "dolor al respirar", "no puedo respirar", "saturación"],
+    "required_actions": [
+      {"id": "history_review", "label": "Revisión de antecedentes completada", "type": "checkbox"},
+      {"id": "lung_exam", "label": "Registrar evaluación respiratoria realizada por el profesional", "type": "text"},
+      {"id": "oxygen_saturation", "label": "Registrar saturación de oxígeno documentada", "type": "number", "min": 1, "max": 100},
+      {"id": "referral_decision", "label": "Registrar decisión profesional de atención o derivación", "type": "text"}
+    ]
+  },
+  "general_review": {
+    "name": "Revisión clínica general — protocolo demostrativo",
+    "priority": "Amarilla",
+    "description": "Checklist general de completitud documental.",
+    "triggers": [],
+    "required_actions": [
+      {"id": "history_review", "label": "Revisión de antecedentes completada", "type": "checkbox"},
+      {"id": "physical_exam", "label": "Registrar evaluación profesional realizada", "type": "text"},
+      {"id": "plan", "label": "Registrar plan definido por el profesional autorizado", "type": "text"}
+    ]
+  }
+}
