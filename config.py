@@ -19,6 +19,8 @@ class Settings:
     ollama_num_predict: int = 320
     ollama_num_gpu: int = 0
     ollama_keep_alive: str = "2m"
+    ai_provider: str = "ollama"
+    allow_lan_access: bool = False
 
 
 def load_settings(env_file: Path | None = None) -> Settings:
@@ -34,6 +36,9 @@ def load_settings(env_file: Path | None = None) -> Settings:
         raise ValueError("OLLAMA_TIMEOUT_SECONDS debe ser mayor que cero.")
     if num_ctx <= 0 or num_predict <= 0 or num_gpu < 0:
         raise ValueError("Los límites de Ollama deben ser valores positivos válidos.")
+    provider = os.getenv("AI_PROVIDER", "ollama").strip().casefold()
+    if provider not in {"ollama", "hosted"}:
+        raise ValueError("AI_PROVIDER debe ser ollama o hosted.")
     return Settings(
         ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/"),
         ollama_model=os.getenv("OLLAMA_MODEL", "gemma4:e2b").strip(),
@@ -43,4 +48,6 @@ def load_settings(env_file: Path | None = None) -> Settings:
         ollama_num_predict=num_predict,
         ollama_num_gpu=num_gpu,
         ollama_keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "2m").strip(),
+        ai_provider=provider,
+        allow_lan_access=os.getenv("ALLOW_LAN_ACCESS", "false").strip().casefold() == "true",
     )

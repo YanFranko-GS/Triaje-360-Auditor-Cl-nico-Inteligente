@@ -28,6 +28,8 @@ APP_URL = "http://127.0.0.1:8501"
 MODEL = "gemma4:e2b"
 
 EXPECTED_ENV = {
+    "AI_PROVIDER": "ollama",
+    "ALLOW_LAN_ACCESS": "false",
     "OLLAMA_BASE_URL": "http://localhost:11434",
     "OLLAMA_MODEL": MODEL,
     "OLLAMA_TIMEOUT_SECONDS": "120",

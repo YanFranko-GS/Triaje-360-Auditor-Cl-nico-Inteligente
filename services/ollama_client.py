@@ -8,6 +8,7 @@ import requests
 from pydantic import ValidationError
 
 from config import Settings, load_settings
+from rag.safety import model_document_instruction
 from schemas import GemmaAnalysis
 
 
@@ -58,7 +59,9 @@ def validate_analysis(payload: dict[str, Any]) -> GemmaAnalysis:
 
 
 def analyze_case(
-    symptoms: str, history: list[dict[str, Any]], settings: Settings | None = None,
+    symptoms: str, history: list[dict[str, Any]], settings: Settings | None = None, *,
+    retrieved_chunks: list[dict[str, Any]] | None = None, role: str = "professional_demo",
+    population: str = "adult",
 ) -> tuple[GemmaAnalysis, str]:
     settings = settings or load_settings()
     status = check_ollama(settings)
@@ -67,18 +70,32 @@ def analyze_case(
     if not status.model_available:
         raise OllamaError(f"El modelo configurado {settings.ollama_model} no está instalado. Ejecute: ollama pull {settings.ollama_model}")
 
+    has_evidence = bool(retrieved_chunks)
     system_prompt = (
         "Eres un asistente de auditoría concurrente de completitud documental para un prototipo educativo. "
         "No diagnostiques, prescribas, recomiendes medicamentos ni inventes datos. "
+        f"{model_document_instruction()} "
         "REGLA PRIORITARIA: si el relato contiene falta de aire, dificultad para respirar o dolor al respirar, "
         "protocol_id DEBE ser respiratory_alert. Usa general_review solo cuando no exista ninguna manifestación respiratoria. "
         "Cuando protocol_id sea respiratory_alert, risk_flags DEBE contener al menos una observación breve para revisión profesional. "
         "Ejemplo: 'me falta el aire y tengo dolor al respirar' siempre activa respiratory_alert. "
-        "Resume únicamente el relato y antecedentes recibidos. Incluye los cinco campos requeridos por el esquema. "
+        "Resume únicamente el relato y antecedentes recibidos. "
+        "Si recibes evidencia, cada dato faltante, pregunta o elemento de evidencia debe citar únicamente source_ids recuperados. "
+        "No conviertas elementos de la fuente en órdenes; usa lenguaje de consideración profesional y explica aplicabilidad y límites. "
+        + ("Incluye al menos un evidence_item citado. " if has_evidence else "Deja vacías las tres listas de RAG. ") +
         "El disclaimer debe ser exactamente 'No constituye diagnóstico ni indicación médica.'. "
         "No incluyas markdown, razonamiento interno ni campos adicionales."
     )
-    user_prompt = json.dumps({"relato": symptoms, "antecedentes_ficticios": history}, ensure_ascii=False)
+    user_prompt = json.dumps(
+        {
+            "relato": symptoms,
+            "antecedentes_ficticios": history,
+            "rol": role,
+            "poblacion": population,
+            "documentos_recuperados": retrieved_chunks or [],
+        },
+        ensure_ascii=False,
+    )
     payload = {
         "model": settings.ollama_model,
         "stream": False,

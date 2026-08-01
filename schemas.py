@@ -5,6 +5,28 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
+class MissingInformation(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    field: str = Field(min_length=1, max_length=120)
+    reason: str = Field(min_length=1, max_length=240)
+    source_ids: list[str] = Field(min_length=1, max_length=4)
+
+
+class ProfessionalReviewQuestion(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    question: str = Field(min_length=1, max_length=240)
+    rationale: str = Field(min_length=1, max_length=300)
+    source_ids: list[str] = Field(min_length=1, max_length=4)
+
+
+class EvidenceItem(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    statement: str = Field(min_length=1, max_length=300)
+    source_ids: list[str] = Field(min_length=1, max_length=4)
+    applicability: str = Field(min_length=1, max_length=300)
+    limitations: str = Field(min_length=1, max_length=300)
+
+
 class GemmaAnalysis(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -13,6 +35,9 @@ class GemmaAnalysis(BaseModel):
     protocol_id: Literal["respiratory_alert", "general_review"]
     reason: str = Field(min_length=1, max_length=300)
     disclaimer: str = Field(min_length=1, max_length=180)
+    missing_information: list[MissingInformation] = Field(default_factory=list, max_length=4)
+    questions_for_professional_review: list[ProfessionalReviewQuestion] = Field(default_factory=list, max_length=4)
+    evidence_items: list[EvidenceItem] = Field(default_factory=list, max_length=4)
 
     @field_validator("risk_flags")
     @classmethod
