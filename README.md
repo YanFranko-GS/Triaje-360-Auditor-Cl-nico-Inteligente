@@ -140,6 +140,16 @@ git push -u origin feature/nombre-descriptivo
 
 Abra un Pull Request hacia `develop`. No haga push directo ni fusione sin revisión del responsable del repositorio. Consulte [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Iteración multivista con RAG trazable
+
+La interfaz actual ofrece seis vistas con acceso por perfil demo: Inicio, Portal del paciente, Estación de triaje, Panel médico, Datos ficticios y Auditoría. El seed idempotente incorpora 2 instituciones, 6 perfiles profesionales/administrativos, 10 pacientes sintéticos y 20 atenciones históricas. Use `scripts/seed_demo_data.py` para completar el seed y `scripts/reset_demo_data.py` para restablecer exclusivamente las tablas demo.
+
+El encabezado usa los activos locales de KutanLab y Gemma sin recortarlos; TRIaje 360 permanece como marca tipográfica cuando no existe un archivo gráfico autorizado. La actividad de Gemma se muestra con estados y etapas indeterminadas, duración, modelo, CPU, documentos recuperados, validación Pydantic y respaldo, sin convertirla en un porcentaje clínico.
+
+El RAG local usa SQLite FTS5 y sólo cuatro fragmentos breves preaprobados de OMS Basic Emergency Care e IETSI/EsSalud. Cada resultado expone fuente, URL, fecha, población, score, razón de recuperación y hash. Consulte [arquitectura RAG](docs/rag_architecture.md), [gobierno de fuentes](docs/source_governance.md), [flujos por rol](docs/role_workflows.md), [esquema de datos](docs/database_schema.md) y [opciones de despliegue](docs/deployment_options.md).
+
+Nuevas variables: `AI_PROVIDER=ollama` y `ALLOW_LAN_ACCESS=false`. El proveedor hospedado es sólo una frontera segura no configurada. Ollama y Streamlit permanecen locales; no se incluyen secretos, modelos, bases, logs ni archivos PID.
+
 ## Licencia
 
 Código del prototipo bajo Apache License 2.0. Consulte [LICENSE](LICENSE).

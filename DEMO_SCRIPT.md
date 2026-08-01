@@ -19,3 +19,12 @@ Si aparece «la ejecución de scripts está deshabilitada en este sistema», no 
 **2:25–2:50 — Resiliencia.** Desactivar el toggle de Gemma y repetir el análisis. Mostrar “Respaldo determinista”, `model_used: false` y la causa explícita. Esto demuestra continuidad sin simular uso del modelo.
 
 **2:50–3:00 — Cierre.** Recordar que usa datos y protocolos ficticios, no determina negligencia y toda decisión corresponde a un profesional autorizado.
+
+## Recorrido multivista (3–5 minutos)
+
+1. En **Inicio**, muestre ambos logotipos, el caso `76543210`, el estado real de Gemma y los cuatro fragmentos RAG aprobados.
+2. En **Portal del paciente**, acepte el consentimiento demo, ingrese un relato respiratorio ficticio, marque dolor y registre 0–10. Envíe y confirme `AWAITING_TRIAGE`.
+3. En **Estación de triaje**, abra la cola y pulse **Analizar caso con Gemma 4 y RAG**. Señale actividad por etapas, duración, CPU, `model_used`, Pydantic y las citas; explique que recuperación no equivale a exactitud clínica.
+4. Registre signos ficticios y una decisión profesional con justificación. Muestre el avance a `AWAITING_PHYSICIAN`.
+5. En **Panel médico**, recorra datos, faltantes, banderas, evidencia/citas y trazabilidad. Guarde una nota ficticia y cierre sólo cuando el control documental lo permita.
+6. En **Auditoría**, muestre autor, rol, acción, fuente, modelo y decisiones. En **Datos ficticios**, enseñe estadísticas, gobierno de fuentes y reset acotado.

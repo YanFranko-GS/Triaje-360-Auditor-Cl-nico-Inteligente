@@ -18,6 +18,14 @@ Solo después de esos controles se registra `model_used=true`. El caso real pers
 
 Todos los errores activan una ejecución determinista y un evento auditable. La evidencia visible está en “Trazabilidad técnica”, `model_responses` y [gemma4_real_validation.md](gemma4_real_validation.md).
 
+## Gemma con RAG trazable
+
+El cliente acepta fragmentos recuperados y agrega una instrucción de sistema que los trata como datos no confiables. Cada fragmento lleva `source_id`, `chunk_id`, título, entidad, URL, fecha, población y hash. Gemma puede usar únicamente esos identificadores; `rag.citations.validate_analysis_citations` rechaza citas ajenas a la ejecución.
+
+La interfaz comunica `OFFLINE`, `STARTING`, `READY`, `WARMING_UP`, `ANALYZING`, `VALIDATING`, `COMPLETED`, `FALLBACK` y `ERROR`. Durante inferencia muestra etapas indeterminadas y tiempo transcurrido. Al finalizar informa duración, modelo, CPU, documentos recuperados, Pydantic, `model_used` y fallback. Estos indicadores describen actividad técnica, no confianza clínica.
+
+`AI_PROVIDER=ollama` es el único proveedor operativo. La alternativa `hosted` no contiene implementación ni secretos y devuelve un estado seguro de “no configurado”.
+
 ## Instalación y diagnóstico
 
 La vía recomendada en Windows es hacer doble clic en `INICIAR_TRIAJE360.bat`: **Instalar o reparar** verifica Ollama y ofrece descargar exclusivamente `gemma4:e2b`; **Probar toda la instalación** ejecuta inferencia real con `num_gpu=0`; **Iniciar aplicación** precalienta una vez y abre el navegador. Los logs quedan en `logs`.

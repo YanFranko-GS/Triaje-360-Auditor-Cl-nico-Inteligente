@@ -34,6 +34,14 @@ Es un MVP con datos y protocolos ficticios. No incluye autenticación, cifrado, 
 
 El repositorio contiene suite pytest, `smoke_test.ps1`, verificación HTTP de Streamlit, inicialización SQLite idempotente, comprobación real de Ollama/modelos, inferencia mínima cuando Gemma está disponible y prueba explícita del respaldo. La interfaz expone modelo, `model_used`, JSON validado y eventos persistidos.
 
+## Evolución: plataforma clínica demostrativa trazable
+
+La segunda iteración convierte el panel lineal en un recorrido por roles: captura del paciente, cola de triaje, revisión médica, administración del dataset sintético y auditoría. La base reproduce relaciones entre instituciones, perfiles, antecedentes, atenciones, signos vitales, decisiones, ejecuciones de modelo y fuentes, sin almacenar personas reales.
+
+Se añadió RAG local con SQLite FTS5. Sólo se indexan fragmentos breves con licencia/estado revisados; el modelo recibe documentos como datos no confiables, sólo puede citar los identificadores recuperados y no inventa evidencia cuando no hay resultados. La demo presenta trazabilidad, no una afirmación de exactitud clínica.
+
+Gemma sigue siendo verificable: estados visibles, tiempo real, modelo exacto, CPU, documentos recuperados, validación Pydantic, fallback y `model_used`. El profesional conserva aceptar, modificar, escalar o solicitar reevaluación, y las reglas Python gobiernan estados y cierre.
+
 ## Equipo
 
 KutanLab: Daniel Ríos; Yan Franco Gonzales Segura; Jhon Gesell Villanueva Portella.

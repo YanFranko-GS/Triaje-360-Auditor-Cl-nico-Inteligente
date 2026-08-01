@@ -35,6 +35,14 @@ La aplicación es un monolito modular de Streamlit, adecuado para una demostraci
 
 Ocho tablas de negocio: `patients`, `medical_history`, `consultations`, `model_responses`, `checklist_items`, `actions`, `closures` y `audits`. Las claves foráneas están activas y la inicialización puede repetirse.
 
+## Arquitectura multivista y RAG
+
+`app.py` compone configuración, migraciones, perfil y navegación. `ui/pages.py` implementa las vistas por rol y `ui/ai_status.py` la máquina visual `OFFLINE → STARTING → READY → WARMING_UP → ANALYZING → VALIDATING → COMPLETED`, con estados explícitos de `FALLBACK` y `ERROR`.
+
+`clinical_db.py` mantiene el dominio demostrativo separado mediante tablas `demo_*`. El portal crea `AWAITING_TRIAGE`; el profesional registra signos y decisión para avanzar a `AWAITING_PHYSICIAN`; el médico documenta y cierra sólo cuando las reglas configuradas lo permiten. El LLM no cambia estados por sí mismo.
+
+El subsistema `rag/` valida gobierno y contenido, ingiere fragmentos aprobados en FTS5, filtra por población y entrega citas permitidas a Gemma. La salida ampliada distingue datos estructurados, información faltante, preguntas de revisión y evidencia. Las citas desconocidas invalidan el resultado. Véase [docs/rag_architecture.md](docs/rag_architecture.md).
+
 ## Degradación segura
 
 Ollama desconectado, modelo ausente, timeout, HTTP inválido, salida vacía, JSON defectuoso o validación fallida convergen en el mismo respaldo determinista. `model_used` solo vale 1 después de recibir, identificar y validar la respuesta real.
