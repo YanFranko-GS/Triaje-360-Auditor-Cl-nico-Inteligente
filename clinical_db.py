@@ -205,8 +205,8 @@ def seed_demo_data(db_path: Path | str | None = None) -> dict[str, int]:
     with connect(db_path) as connection:
         initial_seed = connection.execute("SELECT COUNT(*) FROM demo_patients").fetchone()[0] == 0
         institutions = (
-            ("DEMO_MINSA", "Red pública ficticia Andina", "MINSA-inspired", "Perú"),
-            ("DEMO_ESSALUD", "Seguro social ficticio Costa", "EsSalud-inspired", "Perú"),
+            ("DEMO_MINSA", "Red clínica Andina", "validation-network", "Perú"),
+            ("DEMO_ESSALUD", "Red clínica Costa", "validation-network", "Perú"),
         )
         for item in institutions:
             connection.execute(
@@ -214,8 +214,8 @@ def seed_demo_data(db_path: Path | str | None = None) -> dict[str, int]:
                 (*item, "seed_demo", "active", now, now),
             )
         facilities = (
-            ("DEMO_FAC_A", "DEMO_MINSA", "Centro demostrativo Andino", "TRIAGE_NURSE"),
-            ("DEMO_FAC_B", "DEMO_ESSALUD", "Policlínico demostrativo Costa", "TRIAGE_DOCTOR"),
+            ("DEMO_FAC_A", "DEMO_MINSA", "Centro Andino", "TRIAGE_NURSE"),
+            ("DEMO_FAC_B", "DEMO_ESSALUD", "Policlínico Costa", "TRIAGE_DOCTOR"),
         )
         for item in facilities:
             connection.execute(
@@ -231,13 +231,13 @@ def seed_demo_data(db_path: Path | str | None = None) -> dict[str, int]:
         for role in ROLES:
             connection.execute("INSERT OR IGNORE INTO demo_roles VALUES(?,?)", (role, role.replace("_", " ").title()))
         users = (
-            ("DEMO_PATIENT", "Paciente demo", "PATIENT"),
+            ("DEMO_PATIENT", "Paciente 01", "PATIENT"),
             ("DEMO_NURSE_1", "Profesional de triaje A", "TRIAGE_NURSE"),
             ("DEMO_TRIAGE_MD", "Profesional de triaje B", "TRIAGE_DOCTOR"),
             ("DEMO_ATTENDING_1", "Médico tratante A", "ATTENDING_PHYSICIAN"),
             ("DEMO_ATTENDING_2", "Médico tratante B", "ATTENDING_PHYSICIAN"),
-            ("DEMO_SUPERVISOR", "Supervisor demo", "SUPERVISOR"),
-            ("DEMO_ADMIN", "Administrador demo", "ADMIN"),
+            ("DEMO_SUPERVISOR", "Supervisor local", "SUPERVISOR"),
+            ("DEMO_ADMIN", "Administrador local", "ADMIN"),
         )
         for user_id, name, role in users:
             connection.execute("INSERT OR IGNORE INTO demo_users VALUES(?,?,?,?,?,?)", (user_id, name, 1, "active", now, now))
@@ -247,13 +247,24 @@ def seed_demo_data(db_path: Path | str | None = None) -> dict[str, int]:
             identifier = "76543210" if number == 1 else f"SYN-{number:06d}"
             patients.append(
                 (
-                    f"DEMO_PAT_{number:02d}", identifier, f"Paciente sintético {number:02d}", 22 + number * 4,
+                    f"DEMO_PAT_{number:02d}", identifier, f"Paciente {number:02d}", 22 + number * 4,
                     "Mujer" if number % 2 else "Hombre", "MINSA" if number % 2 else "EsSalud",
                     "DEMO_FAC_A" if number % 2 else "DEMO_FAC_B", "seed_demo", "active",
                     "DEMO_ADMIN", "DEMO_ADMIN", now, now,
                 )
             )
         connection.executemany("INSERT OR IGNORE INTO demo_patients VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", patients)
+        for user_id, name, _role in users:
+            connection.execute("UPDATE demo_users SET display_name=?,updated_at=? WHERE id=?", (name, now, user_id))
+        for number in range(1, 11):
+            connection.execute("UPDATE demo_patients SET display_name=?,updated_at=? WHERE id=?", (f"Paciente {number:02d}", now, f"DEMO_PAT_{number:02d}"))
+        connection.execute("UPDATE demo_institutions SET name='Red clínica Andina',updated_at=? WHERE id='DEMO_MINSA'", (now,))
+        connection.execute("UPDATE demo_institutions SET name='Red clínica Costa',updated_at=? WHERE id='DEMO_ESSALUD'", (now,))
+        connection.execute("UPDATE demo_facilities SET name='Centro Andino',updated_at=? WHERE id='DEMO_FAC_A'", (now,))
+        connection.execute("UPDATE demo_facilities SET name='Policlínico Costa',updated_at=? WHERE id='DEMO_FAC_B'", (now,))
+        # Stable eight-digit synthetic identifiers for additional end-to-end patient access.
+        connection.execute("UPDATE demo_patients SET synthetic_identifier='87654321' WHERE id='DEMO_PAT_02'")
+        connection.execute("UPDATE demo_patients SET synthetic_identifier='11223344' WHERE id='DEMO_PAT_03'")
         allergies = (("ALG_AINE", "AINEs"), ("ALG_PEN", "Penicilina"), ("ALG_NONE", "Sin alergias declaradas"))
         medications = (("MED_A", "Medicamento histórico A"), ("MED_B", "Medicamento histórico B"), ("MED_NONE", "Sin medicación habitual declarada"))
         connection.executemany("INSERT OR IGNORE INTO demo_allergies VALUES(?,?)", allergies)
@@ -470,11 +481,13 @@ def save_triage(
             (
                 encounter_id, assessment["proposed_level"], assessment.get("confirmed_level"), assessment["decision"],
                 assessment.get("justification", ""), int(bool(assessment.get("reevaluation_requested"))),
-                "Escala demostrativa de prioridad de 5 niveles", "professional_demo", actor_id, now,
+                assessment.get("scale_name", "Sistema de prioridad de cinco niveles configurable"), "professional_demo", actor_id, now,
             ),
         )
         connection.execute("UPDATE demo_encounters SET status='AWAITING_PHYSICIAN',updated_by=?,updated_at=? WHERE id=?", (actor_id, now, encounter_id))
         _audit(connection, "triage_recorded", assessment, encounter_id=encounter_id, actor_id=actor_id)
+    from longitudinal_db import mirror_triage
+    mirror_triage(encounter_id, vitals, assessment, actor_id, db_path)
 
 
 def save_rag_and_model_run(
@@ -541,7 +554,7 @@ def close_demo_encounter(encounter_id: int, actor_id: str, db_path: Path | str |
                 "UPDATE demo_encounters SET status='CLOSED',updated_by=?,updated_at=? WHERE id=?",
                 (actor_id, utc_now(), encounter_id),
             )
-            reason = "Cierre documental demostrativo registrado."
+            reason = "Cierre documental registrado."
         else:
             reason = "Faltan campos institucionales: " + ", ".join(missing)
         _audit(connection, "documentary_closure_attempt", {"permitted": permitted, "reason": reason}, encounter_id=encounter_id, actor_id=actor_id)

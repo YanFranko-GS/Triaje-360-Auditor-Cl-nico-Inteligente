@@ -6,11 +6,13 @@ from auth_service import AuthPrincipal, logout, seed_demo_accounts
 from clinical_db import migrate_demo_schema, seed_demo_data
 from config import load_settings
 from database import initialize
+from longitudinal_db import migrate_longitudinal_schema
 from rag.ingest import ingest_approved_sources
 from services.ai_provider import provider_status
 from ui.ai_status import AIState, make_status, set_runtime_status
 from ui.auth import render_login
 from ui.layout import render_application_header, render_footer
+from ui.longitudinal_views import render_data_structure, render_patient_history
 from ui.navigation import allowed_pages_for, apply_requested_navigation, request_logout
 from ui.pages import render_audit, render_demo_admin, render_home
 from ui.patient_portal import render_patient_portal, render_patient_tracking
@@ -32,6 +34,7 @@ initialize()
 migrate_demo_schema()
 seed_demo_data()
 seed_demo_accounts()
+migrate_longitudinal_schema()
 ingest_approved_sources()
 load_styles()
 
@@ -67,7 +70,7 @@ with st.sidebar:
         "Cerrar sesión", key="logout_button", use_container_width=True,
         on_click=request_logout, args=(st.session_state,),
     )
-    st.caption("Acceso local · información sintética")
+    st.caption("Acceso local seguro")
 
 render_application_header(principal)
 profile = {"id": principal.user_id, "display_name": principal.display_name, "role": principal.role}
@@ -78,12 +81,14 @@ elif page == "Portal del paciente":
     render_patient_portal(settings, principal)
 elif page == "Seguimiento":
     render_patient_tracking(principal)
+elif page == "Historia clínica":
+    render_patient_history(principal)
 elif page == "Estación de triaje":
     render_triage_workspace(settings, profile)
 elif page == "Panel médico":
     render_physician_workspace(settings, profile)
-elif page == "Datos ficticios":
-    render_demo_admin(profile)
+elif page == "Estructura de datos":
+    render_data_structure()
 elif page == "Auditoría":
     render_audit(profile)
 

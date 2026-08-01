@@ -57,6 +57,14 @@ def seed_demo_accounts(db_path: Path | str | None = None) -> int:
                VALUES('DEMO_PATIENT','DEMO_PAT_01','1999-01-01',?)""",
             (now,),
         )
+        for user_id, patient_id, display_name, birth_date in (
+            ("DEMO_PATIENT_02", "DEMO_PAT_02", "Paciente 02", "1990-02-02"),
+            ("DEMO_PATIENT_03", "DEMO_PAT_03", "Paciente 03", "1985-03-03"),
+        ):
+            connection.execute("INSERT OR IGNORE INTO demo_users VALUES(?,?,1,'active',?,?)", (user_id, display_name, now, now))
+            connection.execute("UPDATE demo_users SET display_name=?,updated_at=? WHERE id=?", (display_name, now, user_id))
+            connection.execute("INSERT OR IGNORE INTO demo_user_roles VALUES(?, 'PATIENT')", (user_id,))
+            connection.execute("INSERT OR IGNORE INTO demo_patient_access VALUES(?,?,?,?)", (user_id, patient_id, birth_date, now))
         return connection.execute("SELECT COUNT(*) FROM demo_password_credentials").fetchone()[0]
 
 
