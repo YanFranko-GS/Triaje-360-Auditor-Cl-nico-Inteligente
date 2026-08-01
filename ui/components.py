@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import base64
 from html import escape
+from pathlib import Path
 from typing import Any
 
 import streamlit as st
@@ -10,6 +12,37 @@ import streamlit as st
 
 def _safe(value: Any) -> str:
     return escape(str(value))
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _image_data(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
+
+def render_brand_header() -> None:
+    kutan = _image_data(ROOT / "logos" / "Nosotros_KutanLAB.png")
+    gemma = _image_data(ROOT / "logos" / "GEMA.png")
+    left = f'<img src="{kutan}" alt="Logo KutanLab">' if kutan else '<span class="brand-fallback">KutanLab</span>'
+    right = f'<img src="{gemma}" alt="Isotipo Gemma 4">' if gemma else '<span class="brand-fallback">Gemma 4</span>'
+    st.markdown(
+        f"""
+        <header class="brand-header">
+          <div class="brand-header__logo">{left}</div>
+          <div class="brand-header__copy">
+            <h1>TRIaje <span>360</span> — Auditor Clínico Inteligente</h1>
+            <p>Apoyo a la completitud documental y recuperación de evidencia clínica</p>
+            <span class="pill pill--warn">Prototipo educativo — datos ficticios</span>
+          </div>
+          <div class="brand-header__powered"><small>Powered by Gemma 4</small>{right}</div>
+        </header>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_header(*, ollama_ready: bool, model_ready: bool, model_name: str) -> None:
