@@ -15,6 +15,7 @@ from clinical_db import (
     encounter_context,
     patient_by_identifier,
     reset_demo_data,
+    record_attention_selection,
     save_clinical_note,
     save_rag_and_model_run,
     save_triage,
@@ -30,6 +31,7 @@ from services.ai_provider import probe_provider, provider_status
 from services.ollama_client import OllamaError
 from ui.ai_status import AIState, get_runtime_status, make_status, render_ai_status, render_inference_activity, set_runtime_status
 from ui.components import render_disclaimer, render_patient_card, render_system_status
+from ui.navigation import request_navigation
 
 
 PAGE_ROLES = {
@@ -57,9 +59,11 @@ def _page_heading(kicker: str, title: str, subtitle: str) -> None:
 
 
 def render_home(settings: Settings, profile: dict[str, str]) -> None:
-    _page_heading("Inicio", "Plataforma demostrativa de atención documental", "Paciente → Triaje → Médico → Auditoría documental")
+    _page_heading("Panel operativo", "Gestión de admisión y completitud clínica", "Paciente → Triaje supervisado → Revisión médica → Trazabilidad")
     status = provider_status(settings)
     render_system_status(reachable=status.reachable, model_available=status.model_available, model_name=settings.ollama_model)
+    st.markdown("### Asistente clínico")
+    st.caption("Gemma 4 local · RAG aprobado · última comprobación y duración visibles")
     render_ai_status(get_runtime_status(settings.ollama_model))
 
     stats = demo_statistics()
@@ -81,17 +85,22 @@ def render_home(settings: Settings, profile: dict[str, str]) -> None:
         """,
         unsafe_allow_html=True,
     )
-    st.markdown('<div class="safety-banner"><b>Prototipo educativo.</b> No diagnostica, prescribe, ordena pruebas ni sustituye al profesional. Use sólo datos ficticios.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="safety-banner"><b>Entorno de validación.</b> Las decisiones requieren revisión profesional y los registros son sintéticos.</div>', unsafe_allow_html=True)
     left, right = st.columns([1.4, 1])
     with left:
         st.subheader("Caso reproducible")
         st.write("Identificador sintético `76543210` · relato respiratorio ficticio · escala de dolor declarada por el paciente.")
-        if st.button("Iniciar recorrido", type="primary", use_container_width=True):
-            st.session_state.nav_page = "Portal del paciente"
-            st.rerun()
+        st.button(
+            "Iniciar recorrido",
+            type="primary",
+            use_container_width=True,
+            key="home_start_tour",
+            on_click=request_navigation,
+            args=(st.session_state, "Portal del paciente"),
+        )
     with right:
         st.subheader("Comprobación técnica")
-        if st.button("Comprobar Gemma 4", use_container_width=True):
+        if st.button("Comprobar asistente", key="check_clinical_assistant", use_container_width=True):
             set_runtime_status(make_status(AIState.WARMING_UP, settings.ollama_model, last_result="Ejecutando inferencia mínima..."))
             try:
                 result = probe_provider(settings)
@@ -211,10 +220,13 @@ def _render_evidence(results: list[Any]) -> None:
 def render_triage_station(settings: Settings, profile: dict[str, str]) -> None:
     if not _role_allowed("Estación de triaje", profile["role"]):
         return
-    _page_heading("Vista 2", "Estación del personal de triaje", "Rol configurable por establecimiento; no se atribuye una regla universal a MINSA o EsSalud.")
+    _page_heading("Espacio clínico", "Estación del personal de triaje", "Cola, captura estructurada y decisión profesional supervisada.")
     encounter_id, context = _select_queue_encounter("AWAITING_TRIAGE")
     if not encounter_id or not context:
         return
+    if st.session_state.get("last_selected_encounter") != encounter_id:
+        record_attention_selection(encounter_id, profile["id"], profile["role"])
+        st.session_state.last_selected_encounter = encounter_id
     patient = context["patient"]
     left, right = st.columns([1.05, 1.4], gap="large")
     with left:

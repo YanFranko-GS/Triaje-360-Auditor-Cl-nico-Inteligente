@@ -125,9 +125,69 @@ def migrate_demo_schema(db_path: Path | str | None = None) -> None:
                 event_type TEXT NOT NULL, details_json TEXT NOT NULL, actor_id TEXT,
                 source TEXT NOT NULL, created_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS demo_password_credentials(
+                user_id TEXT PRIMARY KEY REFERENCES demo_users(id) ON DELETE CASCADE,
+                username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, salt TEXT NOT NULL,
+                algorithm TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS demo_patient_access(
+                user_id TEXT PRIMARY KEY REFERENCES demo_users(id) ON DELETE CASCADE,
+                patient_id TEXT NOT NULL REFERENCES demo_patients(id) ON DELETE CASCADE,
+                birth_date TEXT NOT NULL, created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS demo_sessions(
+                id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES demo_users(id), role_id TEXT NOT NULL,
+                facility_id TEXT, created_at TEXT NOT NULL, last_seen_at TEXT NOT NULL, ended_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS demo_login_events(
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, username_fingerprint TEXT,
+                role_id TEXT, success INTEGER NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS demo_audio_sessions(
+                id TEXT PRIMARY KEY, encounter_id INTEGER REFERENCES demo_encounters(id) ON DELETE CASCADE,
+                user_id TEXT NOT NULL, noise_profile TEXT NOT NULL, consent INTEGER NOT NULL,
+                store_audio INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL, created_at TEXT NOT NULL, completed_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS demo_audio_segments(
+                id TEXT PRIMARY KEY, audio_session_id TEXT NOT NULL REFERENCES demo_audio_sessions(id) ON DELETE CASCADE,
+                sequence_no INTEGER NOT NULL, mime_type TEXT NOT NULL, duration_seconds REAL NOT NULL,
+                sample_rate INTEGER NOT NULL, audio_sha256 TEXT NOT NULL, signal_status TEXT NOT NULL,
+                stored_path TEXT, created_at TEXT NOT NULL, UNIQUE(audio_session_id,sequence_no)
+            );
+            CREATE TABLE IF NOT EXISTS demo_transcriptions(
+                id TEXT PRIMARY KEY, audio_segment_id TEXT REFERENCES demo_audio_segments(id) ON DELETE SET NULL,
+                encounter_id INTEGER REFERENCES demo_encounters(id) ON DELETE CASCADE,
+                provider TEXT NOT NULL, text TEXT NOT NULL, confidence REAL, confirmed INTEGER NOT NULL DEFAULT 0,
+                edited_text TEXT, created_at TEXT NOT NULL, confirmed_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS demo_conversation_turns(
+                id INTEGER PRIMARY KEY AUTOINCREMENT, encounter_id INTEGER REFERENCES demo_encounters(id) ON DELETE CASCADE,
+                turn_no INTEGER NOT NULL, speaker TEXT NOT NULL, question TEXT, response TEXT,
+                source TEXT NOT NULL, confirmed_by TEXT, created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS demo_field_extractions(
+                id INTEGER PRIMARY KEY AUTOINCREMENT, encounter_id INTEGER REFERENCES demo_encounters(id) ON DELETE CASCADE,
+                field_name TEXT NOT NULL, value_json TEXT, source TEXT NOT NULL,
+                confidence_status TEXT NOT NULL, requires_confirmation INTEGER NOT NULL,
+                model_run_id INTEGER REFERENCES demo_model_runs(id), created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS demo_field_confirmations(
+                id INTEGER PRIMARY KEY AUTOINCREMENT, extraction_id INTEGER NOT NULL REFERENCES demo_field_extractions(id) ON DELETE CASCADE,
+                confirmed_value_json TEXT, status TEXT NOT NULL, confirmed_by TEXT NOT NULL,
+                source TEXT NOT NULL, created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS demo_workflow_requirements(
+                facility_id TEXT NOT NULL REFERENCES demo_facilities(id), population TEXT NOT NULL,
+                stage TEXT NOT NULL, field_name TEXT NOT NULL, required INTEGER NOT NULL,
+                version TEXT NOT NULL, updated_at TEXT NOT NULL,
+                PRIMARY KEY(facility_id,population,stage,field_name)
+            );
             CREATE INDEX IF NOT EXISTS idx_demo_encounters_status ON demo_encounters(status,created_at);
             CREATE INDEX IF NOT EXISTS idx_demo_vitals_encounter ON demo_vital_signs(encounter_id,created_at);
             CREATE INDEX IF NOT EXISTS idx_demo_audit_encounter ON demo_audit_events(encounter_id,created_at);
+            CREATE INDEX IF NOT EXISTS idx_demo_sessions_user ON demo_sessions(user_id,ended_at);
+            CREATE INDEX IF NOT EXISTS idx_demo_login_created ON demo_login_events(created_at);
+            CREATE INDEX IF NOT EXISTS idx_demo_turns_encounter ON demo_conversation_turns(encounter_id,turn_no);
             """
         )
 
@@ -162,6 +222,12 @@ def seed_demo_data(db_path: Path | str | None = None) -> dict[str, int]:
                 "INSERT OR IGNORE INTO demo_facilities VALUES(?,?,?,?,?,?,?,?)",
                 (*item, "seed_demo", "active", now, now),
             )
+        for facility_id in ("DEMO_FAC_A", "DEMO_FAC_B"):
+            for field_name in ("chief_complaint", "narrative", "consent_demo"):
+                connection.execute(
+                    "INSERT OR IGNORE INTO demo_workflow_requirements VALUES(?,?,?,?,?,?,?)",
+                    (facility_id, "adult", "admission", field_name, 1, "demo-2026.08", now),
+                )
         for role in ROLES:
             connection.execute("INSERT OR IGNORE INTO demo_roles VALUES(?,?)", (role, role.replace("_", " ").title()))
         users = (
@@ -236,6 +302,9 @@ def reset_demo_data(db_path: Path | str | None = None) -> dict[str, int]:
     migrate_demo_schema(db_path)
     with connect(db_path) as connection:
         for table in (
+            "demo_field_confirmations", "demo_field_extractions", "demo_conversation_turns",
+            "demo_transcriptions", "demo_audio_segments", "demo_audio_sessions", "demo_sessions",
+            "demo_login_events", "demo_password_credentials", "demo_patient_access", "demo_workflow_requirements",
             "demo_requested_considerations", "demo_clinical_notes", "demo_model_runs", "demo_rag_retrievals",
             "demo_triage_assessments", "demo_vital_signs", "demo_audit_events", "demo_encounters",
             "demo_patient_medications", "demo_patient_allergies", "demo_medications", "demo_allergies",
@@ -279,6 +348,30 @@ def patient_by_identifier(identifier: str, db_path: Path | str | None = None) ->
     result["medications"] = [row["name"] for row in medications]
     result["previous_encounters"] = [dict(row) for row in previous]
     return result
+
+
+def patient_by_id(patient_id: str, db_path: Path | str | None = None) -> dict[str, Any] | None:
+    seed_demo_data(db_path)
+    with connect(db_path) as connection:
+        row = connection.execute("SELECT synthetic_identifier FROM demo_patients WHERE id=?", (patient_id,)).fetchone()
+    return patient_by_identifier(row["synthetic_identifier"], db_path) if row else None
+
+
+def patient_tracking(patient_id: str, db_path: Path | str | None = None) -> list[dict[str, Any]]:
+    with connect(db_path) as connection:
+        rows = connection.execute(
+            """SELECT id,status,chief_complaint,created_at,updated_at FROM demo_encounters
+               WHERE patient_id=? AND source!='seed_demo' ORDER BY created_at DESC LIMIT 10""",
+            (patient_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def record_attention_selection(
+    encounter_id: int, actor_id: str, role: str, db_path: Path | str | None = None
+) -> None:
+    with connect(db_path) as connection:
+        _audit(connection, "attention_selected", {"role": role}, encounter_id=encounter_id, actor_id=actor_id)
 
 
 def validate_patient_payload(payload: dict[str, Any]) -> None:

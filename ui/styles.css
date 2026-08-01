@@ -137,3 +137,22 @@
   .steps { grid-template-columns: repeat(2, 1fr); }
   .hero__mark { width: 48px; height: 48px; flex-basis: 48px; }
 }
+
+/* Product shell */
+[data-testid="stToolbar"], #MainMenu, [data-testid="stStatusWidget"], footer[data-testid="stFooter"] { visibility: hidden; height: 0; }
+.login-intro { max-width: 760px; margin: 1.5rem auto 1.25rem; padding: 1.4rem 1.6rem; background: #f8fafc; border: 1px solid #dbe5ef; border-left: 4px solid #0b5cab; border-radius: 12px; }
+.login-intro h1 { color: #102a43; font-size: clamp(1.55rem, 3vw, 2.25rem); line-height: 1.2; margin: .3rem 0; }
+.login-intro p { color: #486581; font-size: 1.02rem; margin: .45rem 0; }
+.login-intro span { color: #627d98; font-size: .86rem; }
+.session-strip { display: flex; gap: .7rem; flex-wrap: wrap; padding: .55rem .8rem; margin: -.4rem 0 1rem; color: #486581; background: #f4f7fa; border: 1px solid #dce6ef; border-radius: 8px; font-size: .82rem; }
+.session-strip span + span::before { content: "·"; margin-right: .7rem; color: #9fb3c8; }
+.patient-ai-state { padding: .85rem 1rem; background: #eaf4fb; border-left: 4px solid #0b74b8; border-radius: 8px; color: #123b56; font-weight: 650; }
+.tracking-card { display: grid; grid-template-columns: 1fr auto; gap: .25rem 1rem; padding: 1rem; margin: .65rem 0; border: 1px solid #d9e2ec; border-radius: 10px; background: #fff; }
+.tracking-card span { color: #0b5cab; font-weight: 650; }
+.tracking-card small { grid-column: 1 / -1; color: #627d98; }
+.clinical-footer { margin-top: 2rem; padding: 1rem 0; border-top: 1px solid #d9e2ec; color: #627d98; font-size: .8rem; }
+@media (max-width: 720px) {
+  .session-strip { display: grid; gap: .3rem; }
+  .session-strip span + span::before { content: none; }
+  .tracking-card { grid-template-columns: 1fr; }
+}

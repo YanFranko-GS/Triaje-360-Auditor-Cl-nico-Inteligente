@@ -24,7 +24,7 @@ def _image_data(path: Path) -> str | None:
     return f"data:image/png;base64,{encoded}"
 
 
-def render_brand_header() -> None:
+def render_brand_header(login: bool = False) -> None:
     kutan = _image_data(ROOT / "logos" / "Nosotros_KutanLAB.png")
     gemma = _image_data(ROOT / "logos" / "GEMA.png")
     left = f'<img src="{kutan}" alt="Logo KutanLab">' if kutan else '<span class="brand-fallback">KutanLab</span>'
@@ -34,11 +34,10 @@ def render_brand_header() -> None:
         <header class="brand-header">
           <div class="brand-header__logo">{left}</div>
           <div class="brand-header__copy">
-            <h1>TRIaje <span>360</span> — Auditor Clínico Inteligente</h1>
-            <p>Apoyo a la completitud documental y recuperación de evidencia clínica</p>
-            <span class="pill pill--warn">Prototipo educativo — datos ficticios</span>
+            <h1>TRIaje <span>360</span></h1>
+            <p>Asistencia inteligente para admisión y completitud clínica</p>
           </div>
-          <div class="brand-header__powered"><small>Powered by Gemma 4</small>{right}</div>
+          <div class="brand-header__powered"><small>Tecnología integrada</small>{right}</div>
         </header>
         """,
         unsafe_allow_html=True,
