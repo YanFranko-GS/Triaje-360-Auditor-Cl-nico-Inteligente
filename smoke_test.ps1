@@ -7,6 +7,7 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue) -and -not (Get-Comma
 if (-not (Test-Path -LiteralPath $venvPython)) { throw "Falta .venv; ejecute setup_windows.ps1." }
 if (-not (Test-Path -LiteralPath ".env")) { throw "Falta .env." }
 & $venvPython -c "import streamlit, requests, pydantic, dotenv; from database import initialize; initialize(); print('DEPENDENCIAS Y SQLITE: OK')"
+if ($LASTEXITCODE -ne 0) { throw "Fallo la comprobacion de dependencias y SQLite." }
 
 if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) { throw "Ollama no esta instalado." }
 $tags = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 5
@@ -28,7 +29,9 @@ if (-not $inference.response) { throw "La inferencia de Gemma devolvio una respu
 Write-Host "GEMMA REAL: OK (model=gemma4:e2b, response=$($inference.response.Trim()))"
 
 & $venvPython -c "from services.ollama_client import fallback_analysis; assert fallback_analysis('me falta el aire').protocol_id == 'respiratory_alert'; print('RESPALDO DETERMINISTA: OK')"
+if ($LASTEXITCODE -ne 0) { throw "Fallo la comprobacion del respaldo determinista." }
 & $venvPython -m pytest -q
+if ($LASTEXITCODE -ne 0) { throw "Pytest fallo; el smoke test no puede continuar como aprobado." }
 
 & (Join-Path $PSScriptRoot "run_windows.ps1")
 $responded = $false

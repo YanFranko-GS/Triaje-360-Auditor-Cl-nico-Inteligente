@@ -93,6 +93,27 @@ def test_empty_response_is_rejected():
         _extract_json("  ")
 
 
+def test_one_valid_fenced_object_is_accepted_for_runtime_resilience():
+    assert _extract_json('```json\n{"summary": "válido"}\n```') == {"summary": "válido"}
+
+
+def test_analyze_case_retries_one_invalid_structured_response(
+    monkeypatch: pytest.MonkeyPatch, settings: Settings, valid_payload: dict
+):
+    class Response:
+        def __init__(self, body): self.body = body
+        def raise_for_status(self): return None
+        def json(self): return self.body
+    monkeypatch.setattr(requests, "get", lambda *a, **k: Response({"models": [{"name": "gemma4:e2b"}]}))
+    replies = iter((
+        Response({"model": "gemma4:e2b", "message": {"content": "no-json"}}),
+        Response({"model": "gemma4:e2b", "message": {"content": json.dumps(valid_payload)}}),
+    ))
+    monkeypatch.setattr(requests, "post", lambda *a, **k: next(replies))
+    analysis, model = analyze_case("me falta el aire", [], settings)
+    assert analysis.protocol_id == "respiratory_alert" and model == "gemma4:e2b"
+
+
 def test_ollama_timeout(monkeypatch: pytest.MonkeyPatch, settings: Settings):
     class Response:
         def raise_for_status(self): pass

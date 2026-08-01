@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -45,7 +46,13 @@ def _extract_json(text: str) -> dict[str, Any]:
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise OllamaError("Gemma no devolvió exclusivamente un objeto JSON válido.") from exc
+        fenced = re.fullmatch(r"\s*```(?:json)?\s*(\{.*\})\s*```\s*", text, flags=re.DOTALL | re.IGNORECASE)
+        if not fenced:
+            raise OllamaError("Gemma no devolvió exclusivamente un objeto JSON válido.") from exc
+        try:
+            parsed = json.loads(fenced.group(1))
+        except json.JSONDecodeError as fenced_exc:
+            raise OllamaError("Gemma no devolvió exclusivamente un objeto JSON válido.") from fenced_exc
     if not isinstance(parsed, dict):
         raise OllamaError("La salida de Gemma debe ser un objeto JSON.")
     return parsed
@@ -104,28 +111,37 @@ def analyze_case(
         "keep_alive": settings.ollama_keep_alive,
         "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
         "options": {
-            "temperature": 0.1,
+            "temperature": 0,
             "num_predict": settings.ollama_num_predict,
             "num_ctx": settings.ollama_num_ctx,
             "num_gpu": settings.ollama_num_gpu,
         },
     }
-    try:
-        response = requests.post(
-            f"{settings.ollama_base_url}/api/chat", json=payload, timeout=settings.ollama_timeout_seconds,
-        )
-        response.raise_for_status()
-        body = response.json()
-    except requests.Timeout as exc:
-        raise OllamaError(f"Ollama excedió el tiempo límite de {settings.ollama_timeout_seconds} segundos.") from exc
-    except (requests.RequestException, ValueError) as exc:
-        raise OllamaError(f"No se pudo obtener una respuesta válida de Ollama: {exc}") from exc
+    for attempt in range(2):
+        try:
+            response = requests.post(
+                f"{settings.ollama_base_url}/api/chat", json=payload, timeout=settings.ollama_timeout_seconds,
+            )
+            response.raise_for_status()
+            body = response.json()
+        except requests.Timeout as exc:
+            raise OllamaError(f"Ollama excedió el tiempo límite de {settings.ollama_timeout_seconds} segundos.") from exc
+        except (requests.RequestException, ValueError) as exc:
+            raise OllamaError(f"No se pudo obtener una respuesta válida de Ollama: {exc}") from exc
 
-    response_model = body.get("model")
-    if not response_model or response_model != settings.ollama_model:
-        raise OllamaError("Ollama no identificó correctamente el modelo utilizado.")
-    content = body.get("message", {}).get("content", "")
-    return validate_analysis(_extract_json(content)), response_model
+        response_model = body.get("model")
+        if not response_model or response_model != settings.ollama_model:
+            raise OllamaError("Ollama no identificó correctamente el modelo utilizado.")
+        content = body.get("message", {}).get("content", "")
+        try:
+            return validate_analysis(_extract_json(content)), response_model
+        except OllamaError:
+            if attempt:
+                raise
+            payload["messages"][0]["content"] += (
+                " Reintento de formato: responde con un único objeto JSON completo, sin cercas ni texto adicional."
+            )
+    raise OllamaError("No se obtuvo una salida estructurada válida.")
 
 
 def fallback_analysis(symptoms: str) -> GemmaAnalysis:
