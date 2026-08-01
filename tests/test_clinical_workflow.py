@@ -57,7 +57,7 @@ def test_demo_roles_cover_the_workflow(demo_db: Path) -> None:
 def test_seeded_patient_is_explicitly_synthetic(demo_db: Path) -> None:
     patient = patient_by_identifier("76543210", demo_db)
     assert patient and patient["id"].startswith("DEMO_")
-    assert "sintético" in patient["display_name"].casefold()
+    assert patient["source"] == "seed_demo"
 
 
 def test_pain_score_is_required_when_pain_exists() -> None:
@@ -83,7 +83,7 @@ def test_triage_records_vitals_and_professional_decision(demo_db: Path) -> None:
     context = encounter_context(encounter_id, demo_db)
     assert context and context["status"] == "AWAITING_PHYSICIAN"
     assert context["vitals"]["oxygen_saturation"] == 98
-    assert context["triage"]["scale_name"] == "Escala demostrativa de prioridad de 5 niveles"
+    assert context["triage"]["scale_name"] == "Sistema de prioridad de cinco niveles configurable"
 
 
 def test_closure_depends_only_on_configured_documentary_fields(demo_db: Path) -> None:
