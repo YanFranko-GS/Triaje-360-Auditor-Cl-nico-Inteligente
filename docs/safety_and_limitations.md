@@ -1,5 +1,9 @@
 # Seguridad y limitaciones
 
+La extracción y la verificación independiente reducen omisiones documentales, pero no garantizan exactitud clínica ni eliminan alucinaciones. Ambas solicitudes se ejecutan secuencialmente y cada salida permanece pendiente de confirmación. El verificador no diagnostica ni prescribe.
+
+La prioridad de cinco niveles es configurable y está basada en ESI únicamente como referencia de diseño para validación profesional. No se presenta como normativa nacional del Perú. Consulte `peru_triage_standard_review.md`.
+
 TRIaje 360 es una demostración educativa con pacientes y protocolos ficticios. No diagnostica, prescribe, recomienda medicamentos, determina negligencia ni sustituye el juicio profesional. No afirma usar protocolos oficiales y no reemplaza los institucionales.
 
 ## Controles implementados

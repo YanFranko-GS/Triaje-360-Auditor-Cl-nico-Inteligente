@@ -13,7 +13,8 @@ def test_header_and_primary_copy_are_present() -> None:
     assert "TRIaje 360" in COMPONENTS
     assert "Auditor Clínico Inteligente" in COMPONENTS
     assert "Auditoría concurrente de completitud documental con Gemma 4" in COMPONENTS
-    assert "Prototipo educativo" in COMPONENTS
+    assert "Plataforma inteligente de admisión, triaje y continuidad clínica" in COMPONENTS
+    assert "Prototipo educativo" not in COMPONENTS
 
 
 def test_initial_clinical_panel_explains_the_flow() -> None:
@@ -25,7 +26,7 @@ def test_initial_clinical_panel_explains_the_flow() -> None:
 
 def test_main_actions_and_model_states_are_visible() -> None:
     assert "Analizar caso con Gemma 4 y RAG" in PAGES
-    assert "Cerrar registro demostrativo" in PAGES
+    assert "Cerrar registro" in PAGES
     assert "Gemma 4 respondió correctamente" in PAGES
     assert "Fallback activado" in AI_STATUS
 
@@ -55,7 +56,7 @@ def test_required_status_and_flow_labels_are_present() -> None:
 
 
 def test_multiview_navigation_and_branding_are_present() -> None:
-    for page in ("Inicio", "Portal del paciente", "Estación de triaje", "Panel médico", "Datos ficticios", "Auditoría"):
+    for page in ("Inicio", "Portal del paciente", "Estación de triaje", "Panel médico", "Estructura de datos", "Auditoría"):
         assert page in APP or page in PAGES
     assert "Nosotros_KutanLAB.png" in COMPONENTS
     assert "GEMA.png" in COMPONENTS

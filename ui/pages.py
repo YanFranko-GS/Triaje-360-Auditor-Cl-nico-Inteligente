@@ -23,6 +23,7 @@ from clinical_db import (
     triage_queue,
 )
 from config import Settings
+from longitudinal_db import patient_longitudinal_record, record_professional_entry
 from engine import AnalysisRun, process_case
 from rag.citations import citation_payload, traceability_metrics
 from rag.ingest import ingest_approved_sources, load_source_register
@@ -32,13 +33,15 @@ from services.ollama_client import OllamaError
 from ui.ai_status import AIState, get_runtime_status, make_status, render_ai_status, render_inference_activity, set_runtime_status
 from ui.components import render_disclaimer, render_patient_card, render_system_status
 from ui.navigation import request_navigation
+from ui.longitudinal_views import render_descriptive_analytics
+from triage_service import SCALE_NAME, propose_priority
 
 
 PAGE_ROLES = {
     "Portal del paciente": {"PATIENT", "ADMIN"},
     "Estación de triaje": {"TRIAGE_NURSE", "TRIAGE_DOCTOR", "SUPERVISOR", "ADMIN"},
     "Panel médico": {"ATTENDING_PHYSICIAN", "SUPERVISOR", "ADMIN"},
-    "Datos ficticios": {"ADMIN", "SUPERVISOR"},
+    "Estructura de datos": {"ADMIN"},
     "Auditoría": {"SUPERVISOR", "ADMIN"},
 }
 
@@ -47,8 +50,8 @@ def _role_allowed(page: str, role: str) -> bool:
     allowed = PAGE_ROLES.get(page)
     if not allowed or role in allowed:
         return True
-    st.warning(f"La vista {page} requiere uno de estos perfiles demo: {', '.join(sorted(allowed))}.")
-    st.caption("Autenticación demostrativa; no apta para producción.")
+    st.warning(f"La vista {page} requiere uno de estos perfiles: {', '.join(sorted(allowed))}.")
+    st.caption("El perfil actual no tiene permiso para esta operación.")
     return False
 
 
@@ -59,7 +62,7 @@ def _page_heading(kicker: str, title: str, subtitle: str) -> None:
 
 
 def render_home(settings: Settings, profile: dict[str, str]) -> None:
-    _page_heading("Panel operativo", "Gestión de admisión y completitud clínica", "Paciente → Triaje supervisado → Revisión médica → Trazabilidad")
+    _page_heading("Panel operativo", "Plataforma inteligente de admisión, triaje y continuidad clínica", "Paciente → Triaje supervisado → Revisión médica → Trazabilidad")
     status = provider_status(settings)
     render_system_status(reachable=status.reachable, model_available=status.model_available, model_name=settings.ollama_model)
     st.markdown("### Asistente clínico")
@@ -71,13 +74,13 @@ def render_home(settings: Settings, profile: dict[str, str]) -> None:
     cols = st.columns(4)
     cols[0].metric("RAG aprobado", f"{rag_count} chunks")
     cols[1].metric("Pacientes sintéticos", stats["patients"])
-    cols[2].metric("Atenciones demo", stats["encounters"])
+    cols[2].metric("Atenciones", stats["encounters"])
     cols[3].metric("Perfil activo", profile["role"])
 
     st.markdown(
         """
-        <section class="workflow-grid" aria-label="Flujo de atención demostrativo">
-          <div class="workflow-card"><b>1 · Paciente</b><span>Registra datos ficticios y síntomas; no recibe diagnóstico.</span></div>
+        <section class="workflow-grid" aria-label="Flujo de atención">
+          <div class="workflow-card"><b>1 · Paciente</b><span>Registra su relato y confirma los datos; no recibe diagnóstico.</span></div>
           <div class="workflow-card"><b>2 · Triaje</b><span>Profesional documenta signos y revisa evidencia aplicable.</span></div>
           <div class="workflow-card"><b>3 · Médico</b><span>Revisa cronología, faltantes, fuentes y decisiones.</span></div>
           <div class="workflow-card"><b>4 · Auditoría</b><span>Conserva cambios, fuentes, aceptación y cierre documental.</span></div>
@@ -85,11 +88,11 @@ def render_home(settings: Settings, profile: dict[str, str]) -> None:
         """,
         unsafe_allow_html=True,
     )
-    st.markdown('<div class="safety-banner"><b>Entorno de validación.</b> Las decisiones requieren revisión profesional y los registros son sintéticos.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="safety-banner"><b>Control clínico.</b> Las propuestas requieren revisión y confirmación profesional.</div>', unsafe_allow_html=True)
     left, right = st.columns([1.4, 1])
     with left:
-        st.subheader("Caso reproducible")
-        st.write("Identificador sintético `76543210` · relato respiratorio ficticio · escala de dolor declarada por el paciente.")
+        st.subheader("Recorrido de acceso")
+        st.write("Paciente existente, registro nuevo, admisión conversacional y continuidad clínica.")
         st.button(
             "Iniciar recorrido",
             type="primary",
@@ -119,7 +122,7 @@ def render_home(settings: Settings, profile: dict[str, str]) -> None:
 def render_patient_portal(settings: Settings, profile: dict[str, str]) -> None:
     if not _role_allowed("Portal del paciente", profile["role"]):
         return
-    _page_heading("Vista 1", "Portal del paciente", "Captura inicial ficticia; clasificación orientativa pendiente de validación profesional.")
+    _page_heading("Vista 1", "Portal del paciente", "Captura inicial y clasificación orientativa pendiente de validación profesional.")
     st.markdown('<div class="safety-banner">Si el relato contiene una señal configurada como crítica: <b>solicite valoración inmediata del personal</b>. La aplicación no aconseja esperar ni automedicarse.</div>', unsafe_allow_html=True)
 
     identifier = st.text_input("DNI o identificador sintético", value="76543210", max_chars=12)
@@ -132,15 +135,15 @@ def render_patient_portal(settings: Settings, profile: dict[str, str]) -> None:
                 "history": [{"detail": item} for item in patient["allergies"] + patient["medications"]],
             }
         )
-        st.caption(f"Asegurador ficticio: {patient['insurer']} · establecimiento: {patient['facility_id']}")
+        st.caption(f"Aseguramiento: {patient['insurer']} · establecimiento: {patient['facility_id']}")
     else:
         st.info("Use un identificador sintético sembrado; no ingrese datos personales reales.")
 
     with st.form("patient_intake"):
-        consent = st.checkbox("Acepto el consentimiento demostrativo y confirmo que usaré datos ficticios")
+        consent = st.checkbox("Acepto el consentimiento para organizar esta información")
         chief = st.text_input("Motivo de consulta")
         narrative = st.text_area("Relato o dictado transcrito", height=120)
-        duration = st.text_input("Duración de síntomas", placeholder="Ejemplo ficticio: desde ayer")
+        duration = st.text_input("Duración de síntomas", placeholder="Ejemplo: desde ayer")
         pain_present = st.checkbox("Existe dolor")
         pain_score = st.number_input(
             "Escala de dolor declarada (0–10)", min_value=0, max_value=10, value=None,
@@ -155,7 +158,7 @@ def render_patient_portal(settings: Settings, profile: dict[str, str]) -> None:
             ("Falta de aire", "Mareo", "Náuseas", "Tos", "Fiebre declarada", "Otro"),
         )
         mobility = st.selectbox("Movilidad", ("independiente", "con apoyo", "camilla", "no declarado"))
-        companion = st.text_input("Acompañante ficticio", value="sin acompañante")
+        companion = st.text_input("Acompañante", value="sin acompañante")
         pregnancy = st.selectbox("Embarazo posible cuando aplique", ("no aplica", "no declarado", "sí declarado", "no declarado como posible"))
         submitted = st.form_submit_button("Enviar para valoración de triaje", type="primary", use_container_width=True)
     if submitted:
@@ -184,13 +187,13 @@ def _select_queue_encounter(status_filter: str | None = None) -> tuple[int | Non
     if status_filter:
         queue = [item for item in queue if item["status"] == status_filter]
     if not queue:
-        st.info("No existen atenciones ficticias pendientes para esta vista.")
+        st.info("No existen atenciones pendientes para esta vista.")
         return None, None
-    labels = {item["id"]: f"#{item['id']} · {item['display_name']} · {item['status']} · espera simulada {max(item['wait_minutes'], 0)} min" for item in queue}
+    labels = {item["id"]: f"#{item['id']} · {item['display_name']} · {item['status']} · espera {max(item['wait_minutes'], 0)} min" for item in queue}
     default = st.session_state.get("selected_encounter")
     ids = list(labels)
     index = ids.index(default) if default in ids else 0
-    encounter_id = st.selectbox("Cola ficticia", ids, index=index, format_func=lambda item: labels[item])
+    encounter_id = st.selectbox("Cola de pacientes", ids, index=index, format_func=lambda item: labels[item])
     st.session_state.selected_encounter = encounter_id
     return encounter_id, encounter_context(encounter_id)
 
@@ -237,7 +240,7 @@ def render_triage_station(settings: Settings, profile: dict[str, str]) -> None:
         st.write(f"**Dolor declarado:** {context['pain_score'] if context['pain_present'] else 'No declarado'}")
         st.write("**Alergias:** " + ", ".join(patient["allergies"]))
         st.write("**Medicación histórica:** " + ", ".join(patient["medications"]))
-        st.caption("Fuente: portal demo, seed sintético y antecedentes estructurados; no forman parte del corpus RAG.")
+        st.caption("Fuente: portal del paciente y antecedentes estructurados; no forman parte del corpus RAG.")
     with right:
         runtime = get_runtime_status(settings.ollama_model)
         render_ai_status(runtime)
@@ -291,7 +294,7 @@ def render_triage_station(settings: Settings, profile: dict[str, str]) -> None:
             render_ai_status(get_runtime_status(settings.ollama_model))
             st.markdown("#### Resultado pendiente de revisión profesional")
             st.write(run.analysis.summary)
-            st.caption(f"model_used={str(run.model_used).lower()} · model_name={run.model_name} · protocolo demostrativo={run.analysis.protocol_id}")
+            st.caption(f"model_used={str(run.model_used).lower()} · model_name={run.model_name} · protocolo configurado={run.analysis.protocol_id}")
             if run.fallback_reason:
                 st.warning(run.fallback_reason)
             _render_evidence(st.session_state.get("last_rag_results", []))
@@ -313,8 +316,16 @@ def render_triage_station(settings: Settings, profile: dict[str, str]) -> None:
         height = c1.number_input("Talla", min_value=0.0, value=None)
         pain = c2.number_input("Dolor 0–10", min_value=0, max_value=10, value=context["pain_score"])
         population = c3.selectbox("Población", ("adult", "pediatric", "obstetric", "other"))
-        proposed = st.text_input("Categoría propuesta para revisión", value="Pendiente de revisión profesional", disabled=True)
-        confirmed = st.selectbox("Escala demostrativa de prioridad de 5 niveles", ("Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4", "Nivel 5"))
+        proposal = propose_priority(
+            {"systolic": systolic, "diastolic": diastolic, "heart_rate": heart_rate, "respiratory_rate": respiratory_rate,
+             "temperature": temperature, "oxygen_saturation": oxygen, "glucose": glucose,
+             "consciousness_scale": consciousness, "pain_score": pain, "population": population},
+            context,
+        )
+        st.info(f"Prioridad propuesta: Nivel {proposal.level}. " + " ".join(proposal.reasons))
+        st.caption(SCALE_NAME + ". No constituye una decisión automática.")
+        proposed = st.text_input("Categoría propuesta para revisión", value=f"Nivel {proposal.level}", disabled=True)
+        confirmed = st.selectbox("Prioridad profesional de 5 niveles", ("Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4", "Nivel 5"), index=proposal.level - 1)
         decision = st.radio("Decisión profesional", ("aceptar", "modificar", "escalar", "solicitar reevaluación"), horizontal=True)
         justification = st.text_area("Justificación u observación profesional")
         triage_submit = st.form_submit_button("Registrar triaje profesional", type="primary", use_container_width=True)
@@ -333,6 +344,7 @@ def render_triage_station(settings: Settings, profile: dict[str, str]) -> None:
                 {
                     "proposed_level": proposed, "confirmed_level": confirmed, "decision": decision,
                     "justification": justification, "reevaluation_requested": decision == "solicitar reevaluación",
+                    "scale_name": SCALE_NAME,
                 },
                 actor_id=profile["id"],
             )
@@ -347,10 +359,12 @@ def render_physician_panel(settings: Settings, profile: dict[str, str]) -> None:
     if not encounter_id or not context:
         return
     patient = context["patient"]
-    st.subheader("A. Datos disponibles")
+    longitudinal = patient_longitudinal_record(patient["synthetic_identifier"])
+    st.subheader("1. Resumen actual")
     st.write(f"**{patient['display_name']}** · {patient['age']} años · {patient['registered_sex']} · {patient['insurer']}")
     st.write(f"**Relato:** {context['narrative']}")
-    st.json({"alergias": patient["allergies"], "medicacion_historica": patient["medications"], "signos_vitales": context["vitals"], "triaje": context["triage"]})
+    st.write("**Alergias:** " + (", ".join(patient["allergies"]) or "Sin registros"))
+    st.write("**Medicación histórica:** " + (", ".join(patient["medications"]) or "Sin registros"))
 
     missing = []
     if not context["vitals"]:
@@ -359,10 +373,34 @@ def render_physician_panel(settings: Settings, profile: dict[str, str]) -> None:
         missing.append("decisión profesional de triaje")
     if not context.get("duration"):
         missing.append("duración de síntomas")
-    st.subheader("B. Datos faltantes")
+    st.subheader("2. Historia relevante")
+    st.write("**Diagnósticos registrados por profesionales:** " + (", ".join(item["description"] for item in longitudinal["diagnoses"]) or "Sin registros"))
+    st.write("**Recetas anteriores:** " + (", ".join(item["medication_name"] for item in longitudinal["prescriptions"]) or "Sin registros"))
+    st.write("**Atenciones previas:** " + str(len(longitudinal["encounters"])))
+
+    st.subheader("3. Signos vitales")
+    if context["vitals"]:
+        vital_labels = {
+            "systolic": "Sistólica", "diastolic": "Diastólica", "heart_rate": "Frecuencia cardiaca",
+            "respiratory_rate": "Frecuencia respiratoria", "temperature": "Temperatura",
+            "oxygen_saturation": "Saturación", "glucose": "Glucosa", "consciousness_scale": "Conciencia",
+            "weight": "Peso", "height": "Talla", "pain_score": "Dolor 0–10",
+        }
+        st.dataframe([{"Medición": label, "Valor": context["vitals"].get(key)} for key, label in vital_labels.items()], use_container_width=True, hide_index=True)
+    else:
+        st.write("Pendientes de registro")
+
+    st.subheader("4. Evaluación de triaje")
+    if context["triage"]:
+        st.write(f"**Propuesta:** {context['triage']['proposed_level']} · **Confirmación:** {context['triage']['confirmed_level']} · **Decisión:** {context['triage']['decision']}")
+        st.caption(context["triage"]["scale_name"])
+    else:
+        st.write("Pendiente de confirmación profesional")
+
+    st.subheader("5. Datos pendientes")
     st.write(", ".join(missing) if missing else "No se detectaron faltantes configurados en esta etapa.")
 
-    st.subheader("C. Banderas para revisión")
+    st.subheader("Señales para revisión")
     run = st.session_state.get("last_analysis") if st.session_state.get("last_analysis_encounter") == encounter_id else None
     if run and run.analysis.risk_flags:
         for flag in run.analysis.risk_flags:
@@ -370,19 +408,22 @@ def render_physician_panel(settings: Settings, profile: dict[str, str]) -> None:
     else:
         st.info("Sin banderas persistidas en la sesión actual; revise el relato y la trazabilidad.")
 
-    st.subheader("D. Evidencia recuperada")
+    st.subheader("6. Consideraciones respaldadas por fuentes")
     results = LexicalRetriever(limit=4).retrieve(context["narrative"] + " triaje emergencia evaluación respiración", population="adult")
     _render_evidence(results)
     cited = {result.chunk.source_id for result in results}
     st.json(traceability_metrics(results, cited))
 
-    st.subheader("E. Elementos documentados en fuentes para consideración profesional")
+    st.markdown("#### Elementos para consideración profesional documentados en las fuentes")
     st.write("La fuente consultada menciona considerar una evaluación inicial estructurada bajo sus condiciones y población. No se emiten órdenes, pruebas ni procedimientos.")
     st.info("Consulte el protocolo institucional y actúe según su competencia.")
 
-    st.subheader("F. Decisiones del profesional")
+    st.subheader("7. Registro profesional")
     with st.form(f"medical_note_{encounter_id}"):
         note = st.text_area("Nota de revisión o decisión profesional", height=120)
+        diagnosis = st.text_input("Diagnóstico registrado por el profesional (opcional)")
+        prescribed_medication = st.text_input("Medicamento de receta profesional (opcional)")
+        prescription_instructions = st.text_input("Indicaciones registradas por el profesional (opcional)")
         decision = st.selectbox("Tratamiento del elemento documental", ("aceptado para documentación", "no corresponde", "requiere evaluación adicional"))
         justification = st.text_input("Justificación cuando no corresponde o requiere evaluación")
         note_submit = st.form_submit_button("Guardar decisión profesional", use_container_width=True)
@@ -391,36 +432,42 @@ def render_physician_panel(settings: Settings, profile: dict[str, str]) -> None:
             st.error("Esta decisión requiere justificación.")
         else:
             save_clinical_note(encounter_id, f"{decision}: {note}. Justificación: {justification}", profile["id"])
+            record_professional_entry(
+                encounter_id, profile["id"], note=f"{decision}: {note}. Justificación: {justification}",
+                diagnosis=diagnosis, medication=prescribed_medication, instructions=prescription_instructions,
+            )
             st.success("Decisión profesional registrada.")
 
-    st.subheader("G. Checklist documental")
+    st.subheader("Checklist documental")
     missing_fields, can_close = documentary_closure_status(encounter_id)
     if can_close:
         st.success("Campos institucionales configurados completos.")
     else:
         for field in missing_fields:
             st.error(f"Pendiente: {field}")
-    if st.button("Cerrar registro demostrativo", disabled=not can_close, type="primary"):
+    if st.button("Cerrar registro", disabled=not can_close, type="primary"):
         permitted, reason = close_demo_encounter(encounter_id, profile["id"])
         st.success(reason) if permitted else st.error(reason)
 
-    st.subheader("H. Auditoría")
+    render_descriptive_analytics(patient["synthetic_identifier"])
+
+    st.subheader("8. Auditoría")
     events = [item for item in audit_feed(100) if item["encounter_id"] == encounter_id]
     st.dataframe(events, use_container_width=True, hide_index=True)
 
 
 def render_demo_admin(profile: dict[str, str]) -> None:
-    if not _role_allowed("Datos ficticios", profile["role"]):
+    if not _role_allowed("Estructura de datos", profile["role"]):
         return
-    _page_heading("Administración", "Datos ficticios", "Migraciones idempotentes y reset limitado al prefijo demo.")
+    _page_heading("Administración", "Estructura de datos", "Migraciones idempotentes y mantenimiento restringido.")
     stats = demo_statistics()
     cols = st.columns(len(stats))
     for column, (label, value) in zip(cols, stats.items()):
         column.metric(label.replace("_", " ").title(), value)
-    st.caption("Autenticación demostrativa; no apta para producción. No existen contraseñas en texto plano.")
-    if st.button("Sembrar o reparar datos demo"):
+    st.caption("No existen contraseñas en texto plano.")
+    if st.button("Sembrar o reparar datos de validación"):
         st.success(str(seed_demo_data()))
-    if st.button("Reiniciar únicamente datos demo", type="secondary"):
+    if st.button("Reiniciar únicamente datos de validación", type="secondary"):
         st.success(str(reset_demo_data()))
 
     st.subheader("Gobernanza de fuentes")
@@ -432,7 +479,7 @@ def render_demo_admin(profile: dict[str, str]) -> None:
 def render_audit(profile: dict[str, str]) -> None:
     if not _role_allowed("Auditoría", profile["role"]):
         return
-    _page_heading("Trazabilidad", "Auditoría documental", "Eventos de datos demo, recuperación RAG, ejecución de modelo y decisiones profesionales.")
+    _page_heading("Trazabilidad", "Auditoría documental", "Eventos, recuperación RAG, ejecución de modelo y decisiones profesionales.")
     rows = audit_feed(200)
     st.dataframe(rows, use_container_width=True, hide_index=True)
     with st.expander("Detalles JSON del evento más reciente"):
@@ -449,7 +496,7 @@ def render_page(page: str, settings: Settings, profile: dict[str, str]) -> None:
         render_triage_station(settings, profile)
     elif page == "Panel médico":
         render_physician_panel(settings, profile)
-    elif page == "Datos ficticios":
+    elif page == "Estructura de datos":
         render_demo_admin(profile)
     else:
         render_audit(profile)

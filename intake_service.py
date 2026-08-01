@@ -21,6 +21,8 @@ FOLLOWUP_QUESTIONS = {
     "usual_medications": "¿Toma medicamentos de manera habitual?",
     "evolution": "¿Los síntomas están mejorando, empeorando o siguen igual?",
     "location": "¿En qué parte del cuerpo siente el malestar principal?",
+    "accompanying_symptoms": "¿Presenta dificultad respiratoria, pérdida de conciencia, sangrado, sudoración, náuseas o mareo?",
+    "relevant_history": "¿Tiene antecedentes relevantes que debamos comunicar al personal?",
 }
 
 
@@ -118,5 +120,15 @@ def confirm_field(extraction: IntakeExtraction, field_name: str, value: Any, sou
         raise ValueError("Campo de admisión no permitido.")
     updated = extraction.model_copy(deep=True)
     setattr(updated, field_name, _field(value, source, confirmed=True))
+    updated.missing_fields = [item for item in updated.missing_fields if item != field_name]
+    return IntakeExtraction.model_validate(updated.model_dump())
+
+
+def resolve_field_as_null(extraction: IntakeExtraction, field_name: str, source: str = "patient_text") -> IntakeExtraction:
+    """Record an explicit unknown/refusal/not-applicable resolution, never an inferred absence."""
+    if field_name not in IntakeExtraction.model_fields or field_name == "missing_fields":
+        raise ValueError("Campo de admisión no permitido.")
+    updated = extraction.model_copy(deep=True)
+    setattr(updated, field_name, CapturedField(value=None, source=source, confidence_status="confirmed", requires_confirmation=False))
     updated.missing_fields = [item for item in updated.missing_fields if item != field_name]
     return IntakeExtraction.model_validate(updated.model_dump())

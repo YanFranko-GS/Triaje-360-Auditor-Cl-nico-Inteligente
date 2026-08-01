@@ -1,5 +1,16 @@
 # Changelog
 
+## Final release
+
+- Registro dinámico y acceso de múltiples pacientes sintéticos.
+- Memoria clínica longitudinal normalizada y esquema exportable.
+- Admisión conversacional por voz/texto con resolución explícita de nulos.
+- Extracción Gemma 4 y verificación independiente secuencial.
+- Prioridad multifactor configurable de cinco niveles con decisión profesional.
+- Historia, diagnósticos y recetas registrados, analítica descriptiva y catálogo administrativo.
+- Revisión de fuentes oficiales peruanas sin presentar ESI como normativa nacional.
+- Contratos responsive, seguridad del paciente y pruebas finales de extremo a extremo.
+
 ## 0.4.0 - 2026-08-01
 
 - Corrección de `nav_page` mediante navegación diferida previa al widget y regresión exacta.

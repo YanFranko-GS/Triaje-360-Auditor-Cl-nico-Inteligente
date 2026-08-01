@@ -5,12 +5,12 @@ from typing import Any
 
 
 ROLE_PAGES = {
-    "PATIENT": ("Portal del paciente", "Seguimiento"),
+    "PATIENT": ("Portal del paciente", "Historia clínica", "Seguimiento"),
     "TRIAGE_NURSE": ("Inicio", "Estación de triaje"),
     "TRIAGE_DOCTOR": ("Inicio", "Estación de triaje"),
     "ATTENDING_PHYSICIAN": ("Inicio", "Panel médico"),
     "SUPERVISOR": ("Inicio", "Panel médico", "Auditoría"),
-    "ADMIN": ("Inicio", "Portal del paciente", "Estación de triaje", "Panel médico", "Datos ficticios", "Auditoría"),
+    "ADMIN": ("Inicio", "Portal del paciente", "Estación de triaje", "Panel médico", "Estructura de datos", "Auditoría"),
 }
 
 

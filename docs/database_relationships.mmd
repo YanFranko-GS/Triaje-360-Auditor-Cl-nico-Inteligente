@@ -1,0 +1,109 @@
+erDiagram
+    patients ||--o{ allergies : "dni to patient_dni"
+    patients ||--o{ audit_events : "dni to patient_dni"
+    encounters ||--o{ audit_events : "id to encounter_id"
+    encounters ||--o{ clinical_notes : "id to encounter_id"
+    patients ||--o{ conversation_turns : "dni to patient_dni"
+    encounters ||--o{ conversation_turns : "id to encounter_id"
+    encounters ||--o{ diagnoses : "id to encounter_id"
+    patients ||--o{ diagnoses : "dni to patient_dni"
+    facilities ||--o{ encounters : "id to facility_id"
+    patients ||--o{ encounters : "dni to patient_dni"
+    institutions ||--o{ facilities : "id to institution_id"
+    field_extractions ||--o{ field_confirmations : "id to extraction_id"
+    patients ||--o{ field_extractions : "dni to patient_dni"
+    encounters ||--o{ field_extractions : "id to encounter_id"
+    encounters ||--o{ imaging_results : "id to encounter_id"
+    encounters ||--o{ laboratory_results : "id to encounter_id"
+    patients ||--o{ medications : "dni to patient_dni"
+    encounters ||--o{ model_runs : "id to encounter_id"
+    encounters ||--o{ pain_assessments : "id to encounter_id"
+    patients ||--o{ patient_identifiers : "dni to patient_dni"
+    encounters ||--o{ prescriptions : "id to encounter_id"
+    patients ||--o{ prescriptions : "dni to patient_dni"
+    encounters ||--o{ procedures : "id to encounter_id"
+    encounters ||--o{ rag_retrievals : "id to encounter_id"
+    facilities ||--o{ sessions : "id to facility_id"
+    roles ||--o{ sessions : "id to role_id"
+    users ||--o{ sessions : "id to user_id"
+    encounters ||--o{ symptoms : "id to encounter_id"
+    encounters ||--o{ triage_assessments : "id to encounter_id"
+    encounters ||--o{ vital_signs : "id to encounter_id"
+    allergies {
+        string id
+    }
+    audit_events {
+        string id
+    }
+    clinical_notes {
+        string id
+    }
+    conversation_turns {
+        string id
+    }
+    diagnoses {
+        string id
+    }
+    encounters {
+        string id
+    }
+    facilities {
+        string id
+    }
+    field_confirmations {
+        string id
+    }
+    field_extractions {
+        string id
+    }
+    imaging_results {
+        string id
+    }
+    institutions {
+        string id
+    }
+    laboratory_results {
+        string id
+    }
+    medications {
+        string id
+    }
+    model_runs {
+        string id
+    }
+    pain_assessments {
+        string id
+    }
+    patient_identifiers {
+        string id
+    }
+    patients {
+        string id
+    }
+    prescriptions {
+        string id
+    }
+    procedures {
+        string id
+    }
+    rag_retrievals {
+        string id
+    }
+    roles {
+        string id
+    }
+    sessions {
+        string id
+    }
+    symptoms {
+        string id
+    }
+    triage_assessments {
+        string id
+    }
+    users {
+        string id
+    }
+    vital_signs {
+        string id
+    }
