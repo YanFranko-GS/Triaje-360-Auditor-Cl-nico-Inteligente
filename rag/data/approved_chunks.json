@@ -1,0 +1,38 @@
+[
+  {
+    "source_id": "WHO_BEC_2018",
+    "section": "Overview",
+    "page": "landing page",
+    "population": "mixed",
+    "text": "El curso Basic Emergency Care presenta un enfoque sistemático de evaluación inicial para personal de primer contacto en contextos con recursos limitados.",
+    "applicability": "Contexto educativo internacional; el profesional debe confirmar población y protocolo institucional.",
+    "limitations": "No constituye una orden clínica ni sustituye protocolos locales."
+  },
+  {
+    "source_id": "WHO_BEC_2018",
+    "section": "Course scope",
+    "page": "landing page",
+    "population": "mixed",
+    "text": "La página oficial describe contenidos de evaluación estructurada, historia SAMPLE, respiración, estado circulatorio, estado mental y transferencia.",
+    "applicability": "Puede orientar campos documentales que el profesional decida revisar.",
+    "limitations": "La fuente combina poblaciones; no usar umbrales ni instrucciones terapéuticas sin una guía aplicable."
+  },
+  {
+    "source_id": "ESSALUD_RRI_2019",
+    "section": "Abstract",
+    "page": "repository metadata",
+    "population": "general",
+    "text": "IETSI documenta una síntesis de evidencia que compara sistemas de triaje en servicios de emergencia y evalúa la calidad de la evidencia disponible.",
+    "applicability": "Sirve para explicar que la selección institucional de una escala requiere evaluación y configuración formal.",
+    "limitations": "No autoriza a presentar una escala nombrada como implementada ni a copiar reglas licenciadas."
+  },
+  {
+    "source_id": "ESSALUD_RRI_2019",
+    "section": "Repository record",
+    "page": "repository metadata",
+    "population": "general",
+    "text": "El registro institucional identifica el documento como reporte de resultados de investigación sobre triaje y servicios médicos de urgencia.",
+    "applicability": "Contexto peruano para gobernanza del flujo demostrativo de triaje.",
+    "limitations": "El prototipo usa una escala demostrativa de cinco niveles y no reproduce Manchester, CTAS, ESI ni SAT."
+  }
+]
