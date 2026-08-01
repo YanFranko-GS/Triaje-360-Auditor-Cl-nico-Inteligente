@@ -25,10 +25,12 @@ class Settings:
     asr_provider: str = "vosk"
     asr_model_path: Path | None = None
     max_audio_seconds: int = 30
+    primary_model: str = "gemma4:e2b"
+    review_model: str = "gemma4:e2b"
 
 
 def load_settings(env_file: Path | None = None) -> Settings:
-    load_dotenv(env_file or ROOT_DIR / ".env", override=False)
+    load_dotenv(env_file or ROOT_DIR / ".env", override=env_file is not None)
     try:
         timeout = int(os.getenv("OLLAMA_TIMEOUT_SECONDS", "120"))
         num_ctx = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
@@ -44,9 +46,10 @@ def load_settings(env_file: Path | None = None) -> Settings:
     provider = os.getenv("AI_PROVIDER", "ollama").strip().casefold()
     if provider not in {"ollama", "hosted"}:
         raise ValueError("AI_PROVIDER debe ser ollama o hosted.")
+    primary_model = os.getenv("PRIMARY_MODEL", os.getenv("OLLAMA_MODEL", "gemma4:e2b")).strip()
     return Settings(
         ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/"),
-        ollama_model=os.getenv("OLLAMA_MODEL", "gemma4:e2b").strip(),
+        ollama_model=primary_model,
         ollama_timeout_seconds=timeout,
         database_path=Path(os.getenv("DATABASE_PATH", str(ROOT_DIR / "data" / "triaje360.db"))),
         ollama_num_ctx=num_ctx,
@@ -59,4 +62,6 @@ def load_settings(env_file: Path | None = None) -> Settings:
         asr_provider=os.getenv("ASR_PROVIDER", "vosk").strip().casefold(),
         asr_model_path=Path(os.environ["ASR_MODEL_PATH"]) if os.getenv("ASR_MODEL_PATH") else None,
         max_audio_seconds=max_audio_seconds,
+        primary_model=primary_model,
+        review_model=os.getenv("REVIEW_MODEL", os.getenv("OLLAMA_MODEL", "gemma4:e2b")).strip(),
     )
