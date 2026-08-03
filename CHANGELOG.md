@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Published a complete English-first project overview and equivalent Spanish README.
+- Added real synthetic-data screenshots, an optimized workflow GIF, branding assets, and Mermaid diagrams.
+- Added canonical agent instructions, an AI replication guide, demo access, and a verified release baseline.
+- Added contributor, conduct, security, issue, and pull-request guidance for public collaboration.
+- Added a Python 3.12 GitHub Actions workflow that excludes local Ollama integration tests.
+
 ## Final release
 
 - Registro dinámico y acceso de múltiples pacientes sintéticos.

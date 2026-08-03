@@ -22,6 +22,10 @@ logs/
 streamlit_stdout.log
 streamlit_stderr.log
 .demo/
+*.wav
+*.mp3
+*.m4a
+*.flac
 
 # Editores y sistema
 .idea/
@@ -33,3 +37,5 @@ Thumbs.db
 # Modelos locales
 *.gguf
 models/
+*.onnx
+*.safetensors
