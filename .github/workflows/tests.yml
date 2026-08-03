@@ -12,12 +12,14 @@ permissions:
 
 jobs:
   unit-tests:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -26,10 +28,53 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Validate public repository artifacts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          required = [
+              Path("README.md"),
+              Path("README.es.md"),
+              Path("AGENTS.md"),
+              Path("CONTRIBUTING.md"),
+              Path("SECURITY.md"),
+              Path("LICENSE"),
+              Path("docs/AI_REPLICATION_GUIDE.md"),
+              Path("docs/DEMO_ACCESS.md"),
+              Path("docs/architecture-overview.md"),
+              Path("docs/assets/branding/kutanlab-logo.png"),
+              Path("docs/assets/demo/triaje360-overview.gif"),
+          ]
+          screenshots = sorted(Path("docs/assets/screenshots").glob("*.png"))
+          missing = [str(path) for path in required if not path.is_file()]
+          assert not missing, f"Missing public artifacts: {missing}"
+          assert len(screenshots) == 8, f"Expected 8 screenshots, found {len(screenshots)}"
+
+          readme = Path("README.md").read_text(encoding="utf-8")
+          agents = Path("AGENTS.md").read_text(encoding="utf-8")
+          assert "README.es.md" in readme and "docs/assets/screenshots" in readme
+          assert "Clinical restrictions" in agents and "Completion criteria" in agents
+
+          for screenshot in screenshots:
+              with Image.open(screenshot) as image:
+                  image.verify()
+                  assert image.format == "PNG", screenshot
+          with Image.open("docs/assets/demo/triaje360-overview.gif") as demo:
+              assert demo.format == "GIF" and getattr(demo, "n_frames", 1) > 1
+          print("Public repository artifacts: OK")
+          PY
 
       - name: Run tests that do not require local Ollama
         env:
           ALLOW_LAN_ACCESS: "false"
           STORE_DEMO_AUDIO: "false"
-        run: python -m pytest -q -m "not integration"
+        run: >-
+          python -m pytest -q -m "not integration"
+          --ignore=tests/test_gemma_integration.py
+          --ignore=tests/test_windows_launcher.py
