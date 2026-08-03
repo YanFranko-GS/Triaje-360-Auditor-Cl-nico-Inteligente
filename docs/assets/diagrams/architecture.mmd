@@ -1,0 +1,8 @@
+flowchart LR
+    U["Patient / staff"] --> UI["Streamlit UI"]
+    UI --> I["Voice or text"]
+    I --> ASR["Vosk ASR"]
+    ASR --> AI["Gemma 4 / Ollama"]
+    AI --> RAG["Governed RAG"]
+    RAG --> V["Pydantic + verifier"]
+    V --> DB["SQLite + audit"]

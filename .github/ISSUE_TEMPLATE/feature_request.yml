@@ -1,0 +1,55 @@
+name: Feature request
+description: Propose a bounded improvement to the research platform.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user or research problem without real clinical data.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Primary role
+      options:
+        - Patient
+        - Triage nurse
+        - Triage physician
+        - Attending physician
+        - Supervisor
+        - Administrator
+        - Contributor or operator
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Clinical, privacy, and evidence impact
+      description: Explain confirmations, professional review, data handling, sources, and failure behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable behavior and tests.
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: This proposal does not claim certification, official endorsement, automatic diagnosis, or automatic prescription.
+          required: true
+        - label: Examples use synthetic data only.
+          required: true

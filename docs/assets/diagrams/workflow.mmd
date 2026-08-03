@@ -1,0 +1,6 @@
+flowchart LR
+    P["Patient"] --> A["Admission"]
+    A --> C["Guided conversation"]
+    C --> T["Supervised triage"]
+    T --> M["Physician review"]
+    M --> D["Documentary closure"]
